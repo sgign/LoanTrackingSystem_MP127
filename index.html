@@ -27,6 +27,7 @@
     <main class="main-content">
         <h1 class="page-title">Home</h1>
 
+        <div id="alerts-container" class="alerts-container"></div>
 
         <section class="metrics-grid">
             <div class="metric-card">
@@ -106,6 +107,8 @@
                 let outstandingLent = 0;
                 let outstandingBorrowed = 0;
                 let totalSettled = 0;
+                const overdueAlerts = [];
+
                 loans.forEach(loan => {
                     const isLender = loan.lenderPersonId === USER_ID;
                     const isBorrower = loan.borrowerPersonId === USER_ID;
@@ -123,6 +126,21 @@
                         outstandingBorrowed += remaining;
                         totalSettled += paid;
                     }
+
+                    // Installment alerts
+                    if (loan.installmentPlan && loan.installmentPlan.terms && (isLender || isBorrower)) {
+                        loan.installmentPlan.terms.forEach(term => {
+                            const status = term.status ? term.status.toUpperCase() : '';
+                            if (status === 'DELINQUENT') {
+                                overdueAlerts.push({
+                                    loan,
+                                    term,
+                                    isLender,
+                                    isBorrower
+                                });
+                            }
+                        });
+                    }
                 });
 
                 const totalOutstanding = outstandingLent + outstandingBorrowed;
@@ -136,7 +154,38 @@
 
                 document.getElementById('total-settled').textContent = formatCurrency(totalSettled);
 
+                // Render Alerts
+                const alertsContainer = document.getElementById('alerts-container');
+                alertsContainer.innerHTML = '';
 
+                // Overdue Alerts
+                overdueAlerts.forEach(alert => {
+                    const card = document.createElement('div');
+                    card.className = 'alert-card delinquent';
+                    card.onclick = () => {
+                        window.location.href = `entry-detail.html?id=${alert.loan.entryId}`;
+                    };
+
+                    const amt = formatCurrency(alert.loan.installmentPlan.amountPerTerm);
+                    const lenderOrBorrowerMsg = alert.isBorrower 
+                        ? `You owe <strong>₱${amt}</strong> to <strong>${alert.loan.lenderPersonName || 'Lender'}</strong>`
+                        : `<strong>${alert.loan.borrowerPersonName || alert.loan.borrowerGroupName || 'Borrower'}</strong> owes you <strong>₱${amt}</strong>`;
+                    
+                    const formattedDate = new Date(alert.term.dueDate).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric'
+                    });
+
+                    card.innerHTML = `
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-content">
+                            <span class="alert-title">Overdue Installment (Term #${alert.term.termNumber})</span>
+                            <span class="alert-message">${lenderOrBorrowerMsg} for "${alert.loan.entryName}"</span>
+                            <span class="alert-meta">Was due on ${formattedDate}</span>
+                        </div>
+                        <div class="alert-action">Resolve</div>
+                    `;
+                    alertsContainer.appendChild(card);
+                });
 
                 // Render recent transactions (up to 5, sorted by ID or date or just last added)
                 // Let's assume order is fine, or sort descending if we want
