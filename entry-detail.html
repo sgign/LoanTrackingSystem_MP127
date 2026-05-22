@@ -889,19 +889,25 @@
 
         // Delete Loan Handler
         async function deleteLoan() {
-            if (!confirm("Are you sure you want to delete this loan entry? This action cannot be undone.")) return;
+            if (!confirm("Are you sure you want to delete this loan entry and all its payments? This action cannot be undone.")) return;
 
             try {
+                // First remove all linked payments to avoid FK constraint error
+                await fetch(`${API_BASE}/payments/by-entry/${entryId}`, {
+                    method: 'DELETE'
+                });
+
+                // Now delete the loan entry itself
                 const response = await fetch(`${API_BASE}/entries/${entryId}`, {
                     method: 'DELETE'
                 });
 
-                if (!response.ok) {
+                if (response.ok || response.status === 204) {
+                    window.location.href = 'all-payments.html';
+                } else {
                     const errText = await response.text();
                     throw new Error(errText || "Error deleting entry");
                 }
-
-                window.location.href = 'index.html';
 
             } catch (err) {
                 console.error("Error deleting entry:", err);
