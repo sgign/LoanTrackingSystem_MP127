@@ -1,6 +1,8 @@
 package com.loantracker.backend.service;
 
 import com.loantracker.backend.dto.LoanEntryDto;
+import com.loantracker.backend.dto.InstallmentPlanDto;
+import com.loantracker.backend.dto.PaymentAllocationDto;
 import com.loantracker.backend.entity.GroupEntity;
 import com.loantracker.backend.entity.LoanEntry;
 import com.loantracker.backend.entity.Person;
@@ -23,6 +25,8 @@ public class LoanEntryService {
     private final LoanEntryRepository loanEntryRepository;
     private final PersonRepository personRepository;
     private final GroupEntityRepository groupEntityRepository;
+    private final InstallmentPlanService installmentPlanService;
+    private final PaymentAllocationService paymentAllocationService;
 
     @Transactional(readOnly = true)
     public List<LoanEntryDto> getAllLoans() {
@@ -69,6 +73,24 @@ public class LoanEntryService {
         }
 
         LoanEntry saved = loanEntryRepository.save(entry);
+
+        // Save Installment Plan if transaction type is Installment Expense
+        if ("Installment Expense".equalsIgnoreCase(saved.getTransactionType()) && dto.getInstallmentPlan() != null) {
+            InstallmentPlanDto planDto = dto.getInstallmentPlan();
+            planDto.setEntryId(saved.getEntryId());
+            installmentPlanService.savePlan(planDto);
+        }
+
+        // Save Payment Allocations if transaction type is Group Expense
+        if ("Group Expense".equalsIgnoreCase(saved.getTransactionType()) && dto.getPaymentAllocations() != null) {
+            paymentAllocationService.saveAllocations(
+                    saved.getEntryId(),
+                    dto.getPaymentAllocations(),
+                    dto.getSplitType() != null ? dto.getSplitType() : "EQUAL",
+                    saved.getAmountBorrowed()
+            );
+        }
+
         return convertToDto(saved);
     }
 
@@ -83,6 +105,28 @@ public class LoanEntryService {
         entry.setReferenceId(generateReferenceId(entry));
 
         LoanEntry saved = loanEntryRepository.save(entry);
+
+        // Update/Save/Delete Installment Plan
+        if ("Installment Expense".equalsIgnoreCase(saved.getTransactionType()) && dto.getInstallmentPlan() != null) {
+            InstallmentPlanDto planDto = dto.getInstallmentPlan();
+            planDto.setEntryId(saved.getEntryId());
+            installmentPlanService.savePlan(planDto);
+        } else if (!"Installment Expense".equalsIgnoreCase(saved.getTransactionType())) {
+            installmentPlanService.deletePlanByEntryId(saved.getEntryId());
+        }
+
+        // Update/Save/Delete Payment Allocations
+        if ("Group Expense".equalsIgnoreCase(saved.getTransactionType()) && dto.getPaymentAllocations() != null) {
+            paymentAllocationService.saveAllocations(
+                    saved.getEntryId(),
+                    dto.getPaymentAllocations(),
+                    dto.getSplitType() != null ? dto.getSplitType() : "EQUAL",
+                    saved.getAmountBorrowed()
+            );
+        } else if (!"Group Expense".equalsIgnoreCase(saved.getTransactionType())) {
+            paymentAllocationService.saveAllocations(saved.getEntryId(), new java.util.ArrayList<>(), "EQUAL", 0.0);
+        }
+
         return convertToDto(saved);
     }
 
@@ -101,6 +145,7 @@ public class LoanEntryService {
         entry.setDateBorrowed(dto.getDateBorrowed());
         entry.setDateFullyPaid(dto.getDateFullyPaid());
         entry.setAmountBorrowed(dto.getAmountBorrowed());
+        entry.setSplitType(dto.getSplitType());
         
         if (dto.getAmountRemaining() != null) {
             entry.setAmountRemaining(dto.getAmountRemaining());
@@ -187,6 +232,16 @@ public class LoanEntryService {
             base64Proof = "data:image/png;base64," + Base64.getEncoder().encodeToString(entry.getReceiptProof());
         }
 
+        InstallmentPlanDto planDto = null;
+        if ("Installment Expense".equalsIgnoreCase(entry.getTransactionType())) {
+            planDto = installmentPlanService.getPlanByEntryId(entry.getEntryId());
+        }
+
+        List<PaymentAllocationDto> allocationDtos = null;
+        if ("Group Expense".equalsIgnoreCase(entry.getTransactionType())) {
+            allocationDtos = paymentAllocationService.getAllocationsByEntryId(entry.getEntryId());
+        }
+
         return LoanEntryDto.builder()
                 .entryId(entry.getEntryId())
                 .referenceId(entry.getReferenceId())
@@ -209,6 +264,9 @@ public class LoanEntryService {
                 .notes(entry.getNotes())
                 .paymentNotes(entry.getPaymentNotes())
                 .receiptProofBase64(base64Proof)
+                .installmentPlan(planDto)
+                .paymentAllocations(allocationDtos)
+                .splitType(entry.getSplitType())
                 .build();
     }
 
