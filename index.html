@@ -27,6 +27,7 @@
     <main class="main-content">
         <h1 class="page-title">Home</h1>
 
+
         <section class="metrics-grid">
             <div class="metric-card">
                 <span class="metric-label">Total Lent</span>
@@ -41,13 +42,13 @@
                 <span class="metric-value" id="total-outstanding">0.00</span>
             </div>
             <div class="metric-card">
-                <span class="metric-label">Total Settled</span>
-                <span class="metric-value" id="total-settled">0.00</span>
+                <span class="metric-label">Total Settleed</span>
+                <span class="metric-value" id="total-settled">0</span>
             </div>
         </section>
 
         <section class="transactions-section">
-            <h2 class="section-title">Recent Transactions</h2>
+            <h2 class="section-title">Recents Transactions</h2>
             <div class="transactions-table-container">
                 <table class="transactions-table">
                     <thead>
@@ -88,9 +89,9 @@
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-US', {
                 style: 'decimal',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(amount || 0);
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(Math.round(amount || 0));
         }
 
         async function loadDashboard() {
@@ -105,7 +106,6 @@
                 let outstandingLent = 0;
                 let outstandingBorrowed = 0;
                 let totalSettled = 0;
-
                 loans.forEach(loan => {
                     const isLender = loan.lenderPersonId === USER_ID;
                     const isBorrower = loan.borrowerPersonId === USER_ID;
@@ -125,23 +125,18 @@
                     }
                 });
 
-                const netOutstanding = outstandingLent - outstandingBorrowed;
+                const totalOutstanding = outstandingLent + outstandingBorrowed;
 
                 // Update UI elements
                 document.getElementById('total-lent').textContent = formatCurrency(totalLent);
                 document.getElementById('total-borrowed').textContent = formatCurrency(totalBorrowed);
                 
                 const outstandingEl = document.getElementById('total-outstanding');
-                outstandingEl.textContent = formatCurrency(Math.abs(netOutstanding));
-                if (netOutstanding < 0) {
-                    outstandingEl.style.color = '#ff8a80'; // reddish if net borrowed
-                } else if (netOutstanding > 0) {
-                    outstandingEl.style.color = '#a5d6a7'; // greenish if net lent
-                } else {
-                    outstandingEl.style.color = '#ffffff';
-                }
+                outstandingEl.textContent = formatCurrency(totalOutstanding);
 
                 document.getElementById('total-settled').textContent = formatCurrency(totalSettled);
+
+
 
                 // Render recent transactions (up to 5, sorted by ID or date or just last added)
                 // Let's assume order is fine, or sort descending if we want
@@ -163,7 +158,23 @@
                     };
 
                     const amountPaid = (loan.amountBorrowed || 0) - (loan.amountRemaining || 0);
-                    const statusClass = (loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-');
+                    
+                    // Determine display status (Ongoing, Overdue, Paid)
+                    let displayStatus = 'Ongoing';
+                    if (loan.paymentStatus === 'PAID') {
+                        displayStatus = 'Paid';
+                    } else {
+                        let hasDelinquent = false;
+                        if (loan.installmentPlan && loan.installmentPlan.terms) {
+                            hasDelinquent = loan.installmentPlan.terms.some(t => t.status === 'DELINQUENT');
+                        }
+                        if (hasDelinquent) {
+                            displayStatus = 'Overdue';
+                        } else {
+                            displayStatus = 'Ongoing';
+                        }
+                    }
+                    const statusClass = displayStatus.toLowerCase();
 
                     row.innerHTML = `
                         <td><strong>${loan.referenceId || 'N/A'}</strong></td>
@@ -172,7 +183,7 @@
                         <td>${loan.lenderPersonName || 'None'}</td>
                         <td>${formatCurrency(amountPaid)}</td>
                         <td>${formatCurrency(loan.amountRemaining)}</td>
-                        <td><span class="status-badge ${statusClass}">${loan.paymentStatus || 'UNPAID'}</span></td>
+                        <td><span class="status-badge ${statusClass}">${displayStatus}</span></td>
                     `;
                     tbody.appendChild(row);
                 });
