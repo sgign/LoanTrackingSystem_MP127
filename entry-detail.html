@@ -397,13 +397,10 @@
     const dateBorrowedInput = document.getElementById('dateBorrowed');
     const dateFullyPaidInput = document.getElementById('dateFullyPaid');
 
-    // 1. When Date Borrowed changes, set the minimum for Date Fully Paid
     dateBorrowedInput.addEventListener('change', function() {
         if (this.value) {
-            // Set the 'min' attribute of the second picker to the value of the first
             dateFullyPaidInput.min = this.value;
 
-            // 2. If Date Fully Paid is already filled and now invalid, reset it
             if (dateFullyPaidInput.value && dateFullyPaidInput.value < this.value) {
                 dateFullyPaidInput.value = "";
                 alert("Date Fully Paid cannot be earlier than the Date Borrowed.");
