@@ -10,4 +10,3 @@ import java.util.UUID;
 public interface PersonRepository extends JpaRepository<Person, UUID> {
     Optional<Person> findByFirstNameIgnoreCaseAndLastNameIgnoreCase(String firstName, String lastName);
 }
-
