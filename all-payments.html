@@ -26,7 +26,170 @@
 
     <main class="main-content">
         <h1 class="page-title">All Loans</h1>
-        <p>Full list of all financial entries and payment details coming soon.</p>
+
+        <!-- Search & Filter Controls -->
+        <div class="filter-bar">
+            <input type="text" id="search-query" class="filter-input" placeholder="Search by entry name, borrower, lender...">
+            
+            <select id="filter-type" class="filter-select">
+                <option value="">All Types</option>
+                <option value="Straight Expense">Straight Expense</option>
+                <option value="Installment Expense">Installment Expense</option>
+                <option value="Group Expense">Group Expense</option>
+            </select>
+
+            <select id="filter-status" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="UNPAID">UNPAID</option>
+                <option value="PARTIALLY PAID">PARTIALLY PAID</option>
+                <option value="PAID">PAID</option>
+            </select>
+        </div>
+
+        <!-- Transactions Section -->
+        <section class="transactions-section">
+            <div class="transactions-table-container">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Ref. ID</th>
+                            <th>Entry Name</th>
+                            <th>Type</th>
+                            <th>Borrower</th>
+                            <th>Lender</th>
+                            <th>Amount</th>
+                            <th>Remaining</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-transactions-body">
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 2rem;">Loading entries...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Actions Footer -->
+        <div class="actions-footer">
+            <a href="entry-detail.html" class="btn-new-entry">+ New Entry</a>
+        </div>
     </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let allLoans = [];
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount || 0);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        async function fetchLoans() {
+            try {
+                const response = await fetch(`${API_BASE}/entries`);
+                if (!response.ok) throw new Error('Failed to fetch entries');
+                allLoans = await response.json();
+                renderLoans(allLoans);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('all-transactions-body').innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2rem; color: #ff8a80;">
+                            Failed to load entries. Make sure backend is running on port 8080.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderLoans(loans) {
+            const tbody = document.getElementById('all-transactions-body');
+            tbody.innerHTML = '';
+
+            if (loans.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.5);">No matching entries found.</td></tr>`;
+                return;
+            }
+
+            loans.forEach(loan => {
+                const row = document.createElement('tr');
+                row.className = 'transaction-row';
+                row.style.cursor = 'pointer';
+                row.onclick = () => {
+                    window.location.href = `entry-detail.html?id=${loan.entryId}`;
+                };
+
+                const statusClass = (loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-');
+                
+                row.innerHTML = `
+                    <td><strong>${loan.referenceId || 'N/A'}</strong></td>
+                    <td>${loan.entryName || 'Unnamed'}</td>
+                    <td>${loan.transactionType || 'Straight'}</td>
+                    <td>${loan.borrowerPersonName || loan.borrowerGroupName || 'None'}</td>
+                    <td>${loan.lenderPersonName || 'None'}</td>
+                    <td>${formatCurrency(loan.amountBorrowed)}</td>
+                    <td>${formatCurrency(loan.amountRemaining)}</td>
+                    <td><span class="status-badge ${statusClass}">${loan.paymentStatus || 'UNPAID'}</span></td>
+                    <td>${formatDate(loan.dateBorrowed)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('search-query').value.toLowerCase().trim();
+            const selectedType = document.getElementById('filter-type').value;
+            const selectedStatus = document.getElementById('filter-status').value;
+
+            const filtered = allLoans.filter(loan => {
+                // Text search matching
+                const entryName = (loan.entryName || '').toLowerCase();
+                const description = (loan.description || '').toLowerCase();
+                const borrower = (loan.borrowerPersonName || loan.borrowerGroupName || '').toLowerCase();
+                const lender = (loan.lenderPersonName || '').toLowerCase();
+                const refId = (loan.referenceId || '').toLowerCase();
+
+                const matchesQuery = !query || 
+                    entryName.includes(query) ||
+                    description.includes(query) ||
+                    borrower.includes(query) ||
+                    lender.includes(query) ||
+                    refId.includes(query);
+
+                // Dropdown type filter
+                const matchesType = !selectedType || loan.transactionType === selectedType;
+
+                // Dropdown status filter
+                const matchesStatus = !selectedStatus || loan.paymentStatus === selectedStatus;
+
+                return matchesQuery && matchesType && matchesStatus;
+            });
+
+            renderLoans(filtered);
+        }
+
+        document.getElementById('search-query').addEventListener('input', applyFilters);
+        document.getElementById('filter-type').addEventListener('change', applyFilters);
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+
+        document.addEventListener('DOMContentLoaded', fetchLoans);
+    </script>
 </body>
 </html>
