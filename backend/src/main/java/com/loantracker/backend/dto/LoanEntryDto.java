@@ -31,4 +31,7 @@ public class LoanEntryDto {
     private String notes;
     private String paymentNotes;
     private String receiptProofBase64;
+    private InstallmentPlanDto installmentPlan;
+    private java.util.List<PaymentAllocationDto> paymentAllocations;
+    private String splitType;
 }

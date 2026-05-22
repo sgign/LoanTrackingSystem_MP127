@@ -142,6 +142,82 @@
                         <textarea id="paymentNotes" class="form-textarea" placeholder="Add payment records, plans..."></textarea>
                     </div>
 
+                    <!-- Installment Plan Panel (Visible only when transactionType == 'Installment Expense') -->
+                    <div id="installment-panel" class="form-group full-width hidden">
+                        <h3 class="section-title" style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Installment Plan Settings</h3>
+                        <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1.25rem; border: 1px solid rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.01);">
+                            <div class="form-group">
+                                <label for="planStartDate">Start Date <span class="required">*</span></label>
+                                <input type="date" id="planStartDate" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="planFrequency">Payment Frequency</label>
+                                <select id="planFrequency" class="form-select">
+                                    <option value="DAILY">Daily</option>
+                                    <option value="WEEKLY">Weekly</option>
+                                    <option value="BI-WEEKLY">Bi-Weekly</option>
+                                    <option value="MONTHLY" selected>Monthly</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="planTerms">Number of Terms</label>
+                                <input type="number" id="planTerms" class="form-input" min="1" max="120" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="planAmountPerTerm">Amount per Term</label>
+                                <input type="number" id="planAmountPerTerm" class="form-input" min="0.01" step="0.01" readonly placeholder="Calculated">
+                            </div>
+                        </div>
+
+                        <!-- Installment Terms Schedule Timeline (Visible in Edit mode or dynamically previewed) -->
+                        <div id="installment-schedule-section" class="hidden" style="margin-top: 1.5rem;">
+                            <h4 style="margin-bottom: 1rem; font-size: 1.1rem; font-weight: 600;">Installment Terms Schedule</h4>
+                            <div id="terms-timeline" class="timeline-container">
+                                <!-- Render terms dynamically here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Allocation Panel (Visible only when transactionType == 'Group Expense') -->
+                    <div id="allocation-panel" class="form-group full-width hidden">
+                        <h3 class="section-title" style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Payment Allocation (Group Split)</h3>
+                        <div style="border: 1px solid rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.01); display: flex; flex-direction: column; gap: 1.25rem;">
+                            <div class="form-group" style="width: 250px;">
+                                <label for="splitType">Split Type</label>
+                                <select id="splitType" class="form-select">
+                                    <option value="EQUAL" selected>Split Equally</option>
+                                    <option value="PERCENT">Split by Percent</option>
+                                    <option value="AMOUNT">Split by Amount</option>
+                                </select>
+                            </div>
+
+                            <div class="transactions-table-container">
+                                <table class="transactions-table allocation-input-table" id="allocation-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 35%;">Person Name <span class="required">*</span></th>
+                                            <th style="width: 20%;" class="col-pct">Percentage (%)</th>
+                                            <th style="width: 25%;" class="col-amt">Allocated Amount ($)</th>
+                                            <th style="width: 10%;">Status</th>
+                                            <th style="width: 10%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allocation-tbody">
+                                        <!-- Dynamic allocation rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 1rem;">
+                                <button type="button" id="btn-add-member" class="btn btn-secondary" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;">+ Add Group Member</button>
+                                <div style="font-size: 1rem; font-weight: 600; text-align: right;">
+                                    <div>Total Allocated: <span id="allocated-total-display">$0.00</span> / <span id="loan-total-display">$0.00</span></div>
+                                    <div id="split-validation-msg" style="font-size: 0.85rem; color: #ff8a80; font-weight: normal; margin-top: 0.25rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Receipt / Proof of Loan -->
                     <div class="form-group full-width image-upload-wrapper">
                         <label for="receiptFile">Receipt or Proof of Loan</label>
@@ -154,7 +230,10 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" id="btn-delete" class="btn btn-danger hidden">Delete Entry</button>
+                    <button type="button" id="btn-delete" class="btn btn-danger hidden" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <img src="delete.png" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" alt="Delete">
+                        Delete Entry
+                    </button>
                     <a href="index.html" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn btn-primary">Save Entry</button>
                 </div>
@@ -170,6 +249,8 @@
         const entryId = urlParams.get('id');
 
         let receiptBase64 = null;
+        let allGroups = [];
+        let allocationRowCounter = 0;
 
         function formatDateForInput(dateStr) {
             if (!dateStr) return '';
@@ -210,6 +291,349 @@
             }
         }
 
+        // Toggle panels based on Transaction Type
+        function toggleTransactionTypeFields() {
+            const type = document.getElementById('transactionType').value;
+            const instPanel = document.getElementById('installment-panel');
+            const allocPanel = document.getElementById('allocation-panel');
+            const planStartDate = document.getElementById('planStartDate');
+
+            if (type === 'Installment Expense') {
+                instPanel.classList.remove('hidden');
+                allocPanel.classList.add('hidden');
+                planStartDate.setAttribute('required', '');
+                
+                if (!planStartDate.value) {
+                    planStartDate.value = document.getElementById('dateBorrowed').value;
+                }
+                calculateAmountPerTerm();
+            } else if (type === 'Group Expense') {
+                instPanel.classList.add('hidden');
+                allocPanel.classList.remove('hidden');
+                planStartDate.removeAttribute('required');
+                
+                updateAllocationHeaders();
+                if (document.getElementById('allocation-tbody').children.length === 0) {
+                    addAllocationRow();
+                }
+                calculateSplits();
+            } else {
+                instPanel.classList.add('hidden');
+                allocPanel.classList.add('hidden');
+                planStartDate.removeAttribute('required');
+            }
+        }
+
+        // Recalculate amount per term
+        function calculateAmountPerTerm() {
+            const amount = parseFloat(document.getElementById('amountBorrowed').value) || 0;
+            const terms = parseInt(document.getElementById('planTerms').value) || 1;
+            const amountPerTermInput = document.getElementById('planAmountPerTerm');
+            
+            if (amount > 0 && terms > 0) {
+                amountPerTermInput.value = (amount / terms).toFixed(2);
+            } else {
+                amountPerTermInput.value = '';
+            }
+        }
+
+        // Load installment plan and schedule timeline
+        async function loadInstallmentPlanAndTerms() {
+            try {
+                const res = await fetch(`${API_BASE}/installments/entry/${entryId}`);
+                if (!res.ok) return;
+                const plan = await res.json();
+                if (!plan) return;
+
+                document.getElementById('planStartDate').value = formatDateForInput(plan.startDate);
+                document.getElementById('planFrequency').value = plan.paymentFrequency;
+                document.getElementById('planTerms').value = plan.paymentTerms;
+                document.getElementById('planAmountPerTerm').value = plan.amountPerTerm ? plan.amountPerTerm.toFixed(2) : '';
+
+                // Show terms schedule
+                const scheduleSection = document.getElementById('installment-schedule-section');
+                scheduleSection.classList.remove('hidden');
+
+                const timeline = document.getElementById('terms-timeline');
+                timeline.innerHTML = '';
+
+                if (plan.terms && plan.terms.length > 0) {
+                    plan.terms.forEach(term => {
+                        const item = document.createElement('div');
+                        item.className = 'timeline-item';
+                        
+                        const details = document.createElement('div');
+                        details.className = 'timeline-details';
+                        
+                        const termNum = document.createElement('span');
+                        termNum.className = 'timeline-term';
+                        termNum.textContent = `Term ${term.termNumber}`;
+                        
+                        const dueDate = document.createElement('span');
+                        dueDate.className = 'timeline-date';
+                        dueDate.innerHTML = `Due Date: <strong>${formatDateForInput(term.dueDate)}</strong>`;
+                        
+                        const badge = document.createElement('span');
+                        badge.className = `status-badge ${term.status.toLowerCase().replace(' ', '-')}`;
+                        badge.textContent = term.status;
+                        
+                        details.appendChild(termNum);
+                        details.appendChild(dueDate);
+                        details.appendChild(badge);
+                        item.appendChild(details);
+
+                        // Show skip button for UNPAID and DELINQUENT terms
+                        if (term.status === 'UNPAID' || term.status === 'DELINQUENT') {
+                            const skipBtn = document.createElement('button');
+                            skipBtn.type = 'button';
+                            skipBtn.className = 'btn-skip';
+                            skipBtn.textContent = 'Skip Term';
+                            skipBtn.addEventListener('click', async () => {
+                                if (confirm(`Are you sure you want to skip Term ${term.termNumber}?`)) {
+                                    await skipTerm(term.termId);
+                                }
+                            });
+                            item.appendChild(skipBtn);
+                        }
+
+                        timeline.appendChild(item);
+                    });
+                } else {
+                    timeline.innerHTML = '<div style="color: rgba(255,255,255,0.4); text-align: center;">No terms generated yet. Saved plan will auto-generate terms.</div>';
+                }
+            } catch (err) {
+                console.error("Error loading installment plan:", err);
+            }
+        }
+
+        // Call Skip Term API
+        async function skipTerm(termId) {
+            try {
+                const response = await fetch(`${API_BASE}/installments/terms/${termId}/skip`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    const err = await response.text();
+                    throw new Error(err || "Failed to skip term");
+                }
+                // Reload details to refresh schedule status & loan balance
+                await loadLoanDetail();
+            } catch (err) {
+                alert("Error skipping term: " + err.message);
+            }
+        }
+
+        // Add a row to group split allocations
+        function addAllocationRow(data = {}) {
+            const tbody = document.getElementById('allocation-tbody');
+            const rowId = `alloc-row-${allocationRowCounter++}`;
+            
+            const tr = document.createElement('tr');
+            tr.id = rowId;
+            tr.className = 'allocation-row';
+
+            const payeeName = data.payeePersonName || '';
+            const percentage = data.percentageOfTotal != null ? data.percentageOfTotal : '';
+            const amount = data.amount != null ? data.amount : '';
+            const status = data.status || 'UNPAID';
+            const payeeId = data.payeePersonId || '';
+            
+            tr.innerHTML = `
+                <td>
+                    <input type="text" class="alloc-payee-name" value="${payeeName}" required placeholder="Name of group member">
+                    <input type="hidden" class="alloc-payee-id" value="${payeeId}">
+                </td>
+                <td>
+                    <input type="number" class="alloc-pct" value="${percentage}" min="0" max="100" step="0.01" placeholder="0.00">
+                </td>
+                <td>
+                    <input type="number" class="alloc-amt" value="${amount}" min="0" step="0.01" placeholder="0.00">
+                </td>
+                <td>
+                    <select class="form-select alloc-status" style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 6px; width: 100%;">
+                        <option value="UNPAID" ${status === 'UNPAID' ? 'selected' : ''}>UNPAID</option>
+                        <option value="PAID" ${status === 'PAID' ? 'selected' : ''}>PAID</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn-remove-row">Remove</button>
+                </td>
+            `;
+
+            // Event listener for remove
+            tr.querySelector('.btn-remove-row').addEventListener('click', () => {
+                tr.remove();
+                calculateSplits();
+            });
+
+            // Event listeners for inline calculation
+            tr.querySelector('.alloc-pct').addEventListener('input', () => {
+                calculateSplits({ trigger: 'pct', rowId });
+            });
+            tr.querySelector('.alloc-amt').addEventListener('input', () => {
+                calculateSplits({ trigger: 'amt', rowId });
+            });
+            tr.querySelector('.alloc-payee-name').addEventListener('change', (e) => {
+                tr.querySelector('.alloc-payee-id').value = '';
+            });
+
+            tbody.appendChild(tr);
+            updateAllocationHeaders();
+            calculateSplits();
+        }
+
+        // Adjust read-only fields based on split type
+        function updateAllocationHeaders() {
+            const splitType = document.getElementById('splitType').value;
+            const table = document.getElementById('allocation-table');
+            const pctInputs = table.querySelectorAll('.alloc-pct');
+            const amtInputs = table.querySelectorAll('.alloc-amt');
+
+            if (splitType === 'EQUAL') {
+                pctInputs.forEach(i => i.setAttribute('readonly', ''));
+                amtInputs.forEach(i => i.setAttribute('readonly', ''));
+            } else if (splitType === 'PERCENT') {
+                pctInputs.forEach(i => i.removeAttribute('readonly'));
+                amtInputs.forEach(i => i.setAttribute('readonly', ''));
+            } else if (splitType === 'AMOUNT') {
+                pctInputs.forEach(i => i.setAttribute('readonly', ''));
+                amtInputs.forEach(i => i.removeAttribute('readonly'));
+            }
+        }
+
+        // Dynamically compute values in table based on split type selection
+        function calculateSplits(opts = {}) {
+            const splitType = document.getElementById('splitType').value;
+            const amountBorrowed = parseFloat(document.getElementById('amountBorrowed').value) || 0;
+            const rows = document.querySelectorAll('.allocation-row');
+            const count = rows.length;
+
+            document.getElementById('loan-total-display').textContent = `$${amountBorrowed.toFixed(2)}`;
+
+            if (count === 0) {
+                document.getElementById('allocated-total-display').textContent = '$0.00';
+                document.getElementById('split-validation-msg').textContent = 'Add at least one member.';
+                return;
+            }
+
+            let totalAllocated = 0;
+            let totalPercent = 0;
+            let isValid = true;
+            let errorMsg = '';
+
+            if (splitType === 'EQUAL') {
+                const equalAmt = amountBorrowed / count;
+                const equalPct = 100.0 / count;
+
+                rows.forEach(row => {
+                    const pctInput = row.querySelector('.alloc-pct');
+                    const amtInput = row.querySelector('.alloc-amt');
+                    pctInput.value = equalPct.toFixed(2);
+                    amtInput.value = equalAmt.toFixed(2);
+                    totalAllocated += equalAmt;
+                    totalPercent += equalPct;
+                });
+
+                totalAllocated = amountBorrowed; // force exact match to avoid minor float division errors
+            } else if (splitType === 'PERCENT') {
+                rows.forEach(row => {
+                    const pctInput = row.querySelector('.alloc-pct');
+                    const amtInput = row.querySelector('.alloc-amt');
+                    const pct = parseFloat(pctInput.value) || 0;
+                    const calculatedAmt = amountBorrowed * (pct / 100.0);
+                    
+                    amtInput.value = calculatedAmt.toFixed(2);
+                    totalPercent += pct;
+                    totalAllocated += calculatedAmt;
+                });
+
+                if (Math.abs(totalPercent - 100.0) > 0.01) {
+                    isValid = false;
+                    errorMsg = `Percentages sum to ${totalPercent.toFixed(2)}%. Must equal 100%.`;
+                }
+            } else if (splitType === 'AMOUNT') {
+                rows.forEach(row => {
+                    const pctInput = row.querySelector('.alloc-pct');
+                    const amtInput = row.querySelector('.alloc-amt');
+                    const amt = parseFloat(amtInput.value) || 0;
+                    const calculatedPct = amountBorrowed > 0 ? (amt / amountBorrowed) * 100.0 : 0;
+
+                    pctInput.value = calculatedPct.toFixed(2);
+                    totalAllocated += amt;
+                    totalPercent += calculatedPct;
+                });
+
+                if (Math.abs(totalAllocated - amountBorrowed) > 0.05) {
+                    isValid = false;
+                    errorMsg = `Amounts sum to $${totalAllocated.toFixed(2)}. Must equal $${amountBorrowed.toFixed(2)}.`;
+                }
+            }
+
+            document.getElementById('allocated-total-display').textContent = `$${totalAllocated.toFixed(2)}`;
+            
+            const msgEl = document.getElementById('split-validation-msg');
+            if (!isValid) {
+                msgEl.textContent = errorMsg;
+                msgEl.style.color = '#ff8a80';
+            } else {
+                msgEl.textContent = '✓ Split matches loan total.';
+                msgEl.style.color = '#81c784';
+            }
+        }
+
+        // Fetch groups list to cross-reference later
+        async function fetchGroups() {
+            try {
+                const res = await fetch(`${API_BASE}/groups`);
+                if (res.ok) {
+                    allGroups = await res.json();
+                }
+            } catch (err) {
+                console.error("Error fetching groups:", err);
+            }
+        }
+
+        // Cross-reference entered borrower group and fetch members
+        async function checkGroupBorrower() {
+            const isPerson = document.getElementById('borrowerTypePerson').checked;
+            if (isPerson) return;
+
+            const groupNameInput = document.getElementById('borrowerGroupName');
+            const groupName = groupNameInput.value.trim().toLowerCase();
+            if (!groupName) return;
+
+            const matchedGroup = allGroups.find(g => g.groupName.trim().toLowerCase() === groupName);
+            if (!matchedGroup) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/groups/${matchedGroup.groupId}/members`);
+                if (!res.ok) return;
+                const members = await res.json();
+                if (members && members.length > 0) {
+                    const tbody = document.getElementById('allocation-tbody');
+                    if (tbody.children.length > 0) {
+                        const firstInputVal = tbody.querySelector('.alloc-payee-name').value.trim();
+                        if (firstInputVal !== '') {
+                            if (!confirm(`Auto-populate split allocations with members of "${matchedGroup.groupName}"?`)) {
+                                return;
+                            }
+                        }
+                    }
+
+                    tbody.innerHTML = '';
+                    members.forEach(member => {
+                        addAllocationRow({
+                            payeePersonId: member.personId,
+                            payeePersonName: `${member.firstName} ${member.lastName}`.trim(),
+                            status: 'UNPAID'
+                        });
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching group members:", err);
+            }
+        }
+
         // Handle Image Upload File Select
         document.getElementById('receiptFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -232,19 +656,30 @@
             // Set default date to today
             document.getElementById('dateBorrowed').value = formatDateForInput(new Date());
 
-            // Add Event Listeners for radio toggle
+            // Add Event Listeners
             document.getElementById('borrowerTypePerson').addEventListener('change', toggleBorrowerFields);
             document.getElementById('borrowerTypeGroup').addEventListener('change', toggleBorrowerFields);
+            document.getElementById('transactionType').addEventListener('change', toggleTransactionTypeFields);
+            document.getElementById('amountBorrowed').addEventListener('input', () => {
+                calculateAmountPerTerm();
+                calculateSplits();
+            });
+            document.getElementById('planTerms').addEventListener('input', calculateAmountPerTerm);
+            document.getElementById('splitType').addEventListener('change', () => {
+                updateAllocationHeaders();
+                calculateSplits();
+            });
+            document.getElementById('btn-add-member').addEventListener('click', () => addAllocationRow());
+            document.getElementById('borrowerGroupName').addEventListener('change', checkGroupBorrower);
 
             try {
+                await fetchGroups();
                 // If editing existing record
                 if (entryId) {
                     await loadLoanDetail();
                 } else {
-                    // Default the lender name field to "David Jonathan Pasumbal" on creation
                     document.getElementById('lenderPersonName').value = "David Jonathan Pasumbal";
                 }
-
             } catch (err) {
                 console.error("Initialization error:", err);
                 alert("Failed to connect to backend service. Please make sure the API server is running on http://localhost:8080");
@@ -310,6 +745,37 @@
 
             // Bind Delete Button Action
             document.getElementById('btn-delete').addEventListener('click', deleteLoan);
+
+            // Toggle transaction type fields (Installments or Payment Allocations)
+            toggleTransactionTypeFields();
+
+            // Populate Installment Plan if available
+            if (loan.transactionType === 'Installment Expense') {
+                await loadInstallmentPlanAndTerms();
+            }
+
+            // Populate Payment Allocations if available
+            if (loan.transactionType === 'Group Expense') {
+                const tbody = document.getElementById('allocation-tbody');
+                tbody.innerHTML = '';
+
+                if (loan.splitType) {
+                    document.getElementById('splitType').value = loan.splitType;
+                    updateAllocationHeaders();
+                }
+
+                if (loan.paymentAllocations && loan.paymentAllocations.length > 0) {
+                    loan.paymentAllocations.forEach(alloc => {
+                        addAllocationRow({
+                            payeePersonId: alloc.payeePersonId,
+                            payeePersonName: alloc.payeePersonName,
+                            percentageOfTotal: alloc.percentageOfTotal,
+                            amount: alloc.amount,
+                            status: alloc.status
+                        });
+                    });
+                }
+            }
         }
 
         // Save Form Handler
@@ -320,11 +786,12 @@
             const borrowerPersonName = isPerson ? document.getElementById('borrowerPersonName').value.trim() : null;
             const borrowerGroupName = !isPerson ? document.getElementById('borrowerGroupName').value.trim() : null;
             const lenderPersonName = document.getElementById('lenderPersonName').value.trim();
+            const transactionType = document.getElementById('transactionType').value;
 
             const payload = {
                 entryName: document.getElementById('entryName').value,
                 description: document.getElementById('description').value,
-                transactionType: document.getElementById('transactionType').value,
+                transactionType: transactionType,
                 dateBorrowed: document.getElementById('dateBorrowed').value ? new Date(document.getElementById('dateBorrowed').value) : null,
                 dateFullyPaid: document.getElementById('dateFullyPaid').value ? new Date(document.getElementById('dateFullyPaid').value) : null,
                 borrowerPersonName: borrowerPersonName,
@@ -335,6 +802,58 @@
                 paymentNotes: document.getElementById('paymentNotes').value,
                 receiptProofBase64: receiptBase64
             };
+
+            // Installment Plan
+            if (transactionType === 'Installment Expense') {
+                payload.installmentPlan = {
+                    startDate: document.getElementById('planStartDate').value ? new Date(document.getElementById('planStartDate').value) : null,
+                    paymentFrequency: document.getElementById('planFrequency').value,
+                    paymentTerms: parseInt(document.getElementById('planTerms').value) || 1,
+                    amountPerTerm: parseFloat(document.getElementById('planAmountPerTerm').value) || 0,
+                    status: 'ACTIVE'
+                };
+            }
+
+            // Payment Allocation
+            if (transactionType === 'Group Expense') {
+                const splitType = document.getElementById('splitType').value;
+                payload.splitType = splitType;
+
+                const rows = document.querySelectorAll('.allocation-row');
+                if (rows.length === 0) {
+                    alert("Please add at least one group member for split allocation.");
+                    return;
+                }
+
+                // Client-side mathematical validation before submit
+                const amountBorrowed = parseFloat(document.getElementById('amountBorrowed').value) || 0;
+                let total = 0;
+                if (splitType === 'PERCENT') {
+                    rows.forEach(r => total += (parseFloat(r.querySelector('.alloc-pct').value) || 0));
+                    if (Math.abs(total - 100.0) > 0.01) {
+                        alert(`Sum of percentages must equal 100%. Current sum: ${total.toFixed(2)}%`);
+                        return;
+                    }
+                } else if (splitType === 'AMOUNT') {
+                    rows.forEach(r => total += (parseFloat(r.querySelector('.alloc-amt').value) || 0));
+                    if (Math.abs(total - amountBorrowed) > 0.05) {
+                        alert(`Sum of allocated amounts must equal total loan amount ($${amountBorrowed.toFixed(2)}). Current sum: $${total.toFixed(2)}`);
+                        return;
+                    }
+                }
+
+                const allocations = [];
+                rows.forEach(row => {
+                    allocations.push({
+                        payeePersonId: row.querySelector('.alloc-payee-id').value || null,
+                        payeePersonName: row.querySelector('.alloc-payee-name').value.trim(),
+                        percentageOfTotal: parseFloat(row.querySelector('.alloc-pct').value) || 0,
+                        amount: parseFloat(row.querySelector('.alloc-amt').value) || 0,
+                        status: row.querySelector('.alloc-status').value
+                    });
+                });
+                payload.paymentAllocations = allocations;
+            }
 
             // In Edit Mode, we include remaining and status fields
             if (entryId) {

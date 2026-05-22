@@ -70,4 +70,7 @@ public class LoanEntry {
 
     @Column(name = "receipt_proof", columnDefinition = "BYTEA")
     private byte[] receiptProof;
+
+    @Column(name = "split_type")
+    private String splitType;
 }
