@@ -47,6 +47,7 @@ CREATE TABLE loan_entry (
     notes VARCHAR(1000),
     payment_notes VARCHAR(1000),
     receipt_proof BYTEA,
+    split_type VARCHAR(50),
     CONSTRAINT fk_loan_entry_borrower_person FOREIGN KEY (borrower_person_id) REFERENCES person (person_id) ON DELETE SET NULL,
     CONSTRAINT fk_loan_entry_borrower_group FOREIGN KEY (borrower_group_id) REFERENCES group_entity (group_id) ON DELETE SET NULL,
     CONSTRAINT fk_loan_entry_lender_person FOREIGN KEY (lender_person_id) REFERENCES person (person_id) ON DELETE SET NULL
