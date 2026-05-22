@@ -10,4 +10,3 @@ import java.util.UUID;
 public interface GroupEntityRepository extends JpaRepository<GroupEntity, UUID> {
     Optional<GroupEntity> findByGroupNameIgnoreCase(String groupName);
 }
-

@@ -1,32 +1,897 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Tracking System - People</title>
-    <meta name="description" content="Manage contacts and group details.">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loan Tracking System — People &amp; Groups</title>
+  <meta name="description" content="Manage contacts and groups for the Loan Tracking System." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ── People & Groups page-specific extensions ── */
+
+    /* Toolbar row */
+    .pg-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .pg-search-wrap {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .pg-search-wrap input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 50px;
+      padding: 0.72rem 2.8rem 0.72rem 1.25rem;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .pg-search-wrap input:focus {
+      border-color: #4caf50;
+      box-shadow: 0 0 0 3px rgba(76,175,80,0.25);
+    }
+
+    .pg-search-wrap input::placeholder { color: rgba(255,255,255,0.4); }
+
+    .pg-search-icon {
+      position: absolute;
+      right: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+      font-size: 1rem;
+    }
+
+    /* Add button — same style as btn-new-entry */
+    .btn-pg-add {
+      background: url('Green Gradient.png') no-repeat center;
+      background-size: cover;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 50px;
+      padding: 0.55rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.2s, filter 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-pg-add:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+    /* Tab toggle pill */
+    .pg-tab-toggle {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(90deg, rgba(32,79,47,0.85) 0%, rgba(55,114,73,0.85) 100%);
+      backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      padding: 0.45rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      transition: filter 0.2s;
+    }
+
+    .pg-tab-toggle:hover { filter: brightness(1.1); }
+
+    .pg-tab-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #121814;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 100;
+      min-width: 140px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+
+    .pg-tab-dropdown.open { display: block; }
+
+    .pg-tab-dropdown button {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.8);
+      padding: 0.8rem 1.25rem;
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .pg-tab-dropdown button:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .pg-tab-dropdown button.active { color: #a5d6a7; }
+
+    /* Person / Group cards */
+    .pg-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      width: 100%;
+    }
+
+    .pg-card {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .pg-card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.4rem;
+      background: url('Green Gradient.png') no-repeat center;
+      background-size: cover;
+    }
+
+    .pg-initials {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.95);
+      color: #1a4d1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.6);
+    }
+
+    .pg-card-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      flex: 1;
+    }
+
+    .pg-entry-badge {
+      background: rgba(0,0,0,0.35);
+      color: rgba(255,255,255,0.9);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 50px;
+      padding: 0.25rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .pg-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .btn-pg-view {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-pg-view:hover { background: rgba(0,0,0,0.7); }
+
+    .btn-pg-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: transform 0.15s, filter 0.2s;
+    }
+
+    .btn-pg-icon:hover { transform: scale(1.1); filter: brightness(1.15); }
+    .btn-pg-edit { background: rgba(255,255,255,0.25); color: #fff; }
+    .btn-pg-delete { background: #e53935; color: #fff; }
+    .btn-pg-delete:hover { background: #c62828; }
+
+    /* Expanded body */
+    .pg-card-body {
+      display: none;
+      background: rgba(0,0,0,0.35);
+      border-top: 1.5px solid rgba(255,255,255,0.1);
+      padding: 1.25rem 1.4rem 1.4rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .pg-card-body.open { display: block; }
+
+    /* Members */
+    .pg-members-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 2rem;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .pg-member-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #a5d6a7;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+
+    .pg-member-chip button {
+      background: none;
+      border: none;
+      color: #ef9a9a;
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .pg-add-member-row {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .pg-add-member-row select {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .pg-add-member-row select option { background: #121814; }
+
+    .btn-pg-sm {
+      background: url('Green Gradient.png') no-repeat center;
+      background-size: cover;
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      padding: 0.6rem 1.1rem;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: filter 0.2s;
+    }
+
+    .btn-pg-sm:hover { filter: brightness(1.1); }
+
+    /* Entry table inside card */
+    .pg-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .pg-table th {
+      text-align: left;
+      color: #a5d6a7;
+      font-weight: 700;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1.5px solid rgba(255,255,255,0.15);
+      font-size: 0.88rem;
+    }
+
+    .pg-table td {
+      padding: 0.6rem 0.75rem;
+      color: rgba(255,255,255,0.88);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-weight: 500;
+    }
+
+    .pg-table tr:last-child td { border-bottom: none; }
+
+    /* Empty state */
+    .pg-empty {
+      text-align: center;
+      padding: 3.5rem 1rem;
+      color: rgba(255,255,255,0.45);
+      font-size: 1rem;
+    }
+
+    /* Modal overlay */
+    .pg-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pg-modal-overlay.open { display: flex; }
+
+    .pg-modal {
+      background: #0e130f;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 2.25rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 16px 60px rgba(0,0,0,0.6);
+      animation: pgModalIn 0.2s ease-out;
+    }
+
+    @keyframes pgModalIn {
+      from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .pg-modal h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.3px;
+    }
+
+    .pg-modal .form-group { margin-bottom: 1rem; }
+
+    .pg-modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* Toast */
+    .pg-toast-container {
+      position: fixed;
+      bottom: 1.75rem;
+      right: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 9999;
+    }
+
+    .pg-toast {
+      background: #121814;
+      border-left: 4px solid #4caf50;
+      border-radius: 10px;
+      padding: 0.9rem 1.25rem;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      animation: pgSlideIn 0.25s ease-out;
+      max-width: 320px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .pg-toast.error { border-left-color: #e53935; }
+
+    @keyframes pgSlideIn {
+      from { opacity: 0; transform: translateX(24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="profile">
-            <div class="profile-avatar">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-            </div>
-            <span class="profile-name">David Pasumbal</span>
-        </div>
-        <nav class="navbar-pill">
-            <a href="index.html">Home</a>
-            <a href="all-payments.html">All Loans</a>
-            <a href="people-groups.html" class="active">People</a>
-        </nav>
-    </header>
 
-    <main class="main-content">
-        <h1 class="page-title">People</h1>
-        <p>Contact and group management dashboard coming soon.</p>
-    </main>
+  <!-- HEADER — same as index.html & all-payments.html -->
+  <header class="header">
+    <div class="profile">
+      <div class="profile-avatar">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </div>
+      <span class="profile-name">David Pasumbal</span>
+    </div>
+    <nav class="navbar-pill">
+      <a href="index.html">Home</a>
+      <a href="all-payments.html">All Loans</a>
+      <a href="people-groups.html" class="active">People</a>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTENT — same wrapper as index.html & all-payments.html -->
+  <main class="main-content">
+    <h1 class="page-title">People &amp; Groups</h1>
+
+    <!-- Toolbar -->
+    <div class="pg-toolbar">
+      <div class="pg-search-wrap">
+        <input type="text" id="pg-search" placeholder="Search…" autocomplete="off" />
+        <span class="pg-search-icon">🔍</span>
+      </div>
+      <button class="btn-pg-add" id="btn-pg-add" onclick="openAddModal()">+ Add Person</button>
+      <div class="pg-tab-toggle" id="pg-tab-toggle" onclick="toggleTabDropdown()">
+        <span id="pg-tab-label">People</span>
+        <span>&#8964;</span>
+        <div class="pg-tab-dropdown" id="pg-tab-dropdown">
+          <button id="tab-btn-people" class="active" onclick="switchTab('people', event)">People</button>
+          <button id="tab-btn-groups" onclick="switchTab('groups', event)">Groups</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card list -->
+    <div class="pg-list" id="pg-content">
+      <div class="pg-empty">Loading…</div>
+    </div>
+
+  </main>
+
+  <!-- TOAST -->
+  <div class="pg-toast-container" id="pg-toasts"></div>
+
+  <!-- ── PERSON MODAL ── -->
+  <div class="pg-modal-overlay" id="person-modal">
+    <div class="pg-modal">
+      <h2 id="person-modal-title">Add Person</h2>
+      <div class="form-group">
+        <label class="form-group">First Name <span class="required">*</span></label>
+        <input class="form-input" type="text" id="p-firstName" placeholder="e.g. Juan" />
+      </div>
+      <div class="form-group">
+        <label>Last Name <span class="required">*</span></label>
+        <input class="form-input" type="text" id="p-lastName" placeholder="e.g. Dela Cruz" />
+      </div>
+      <div class="form-group">
+        <label>Contact Info</label>
+        <input class="form-input" type="text" id="p-contactInfo" placeholder="e.g. 09xxxxxxxxx" />
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea class="form-textarea" id="p-notes" rows="2" placeholder="Optional…"></textarea>
+      </div>
+      <div class="pg-modal-actions">
+        <button class="btn btn-secondary" onclick="closePersonModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePersonModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GROUP MODAL ── -->
+  <div class="pg-modal-overlay" id="group-modal">
+    <div class="pg-modal">
+      <h2 id="group-modal-title">Add Group</h2>
+      <div class="form-group">
+        <label>Group Name <span class="required">*</span></label>
+        <input class="form-input" type="text" id="g-groupName" placeholder="e.g. College Friends" />
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea class="form-textarea" id="g-notes" rows="2" placeholder="Optional…"></textarea>
+      </div>
+      <div class="pg-modal-actions">
+        <button class="btn btn-secondary" onclick="closeGroupModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveGroupModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELETE CONFIRM MODAL ── -->
+  <div class="pg-modal-overlay" id="delete-modal">
+    <div class="pg-modal">
+      <h2>Confirm Delete</h2>
+      <p style="color:rgba(255,255,255,0.7);margin-bottom:0.5rem;">
+        Are you sure you want to delete <strong id="delete-target-name" style="color:#fff;"></strong>?
+      </p>
+      <p style="color:#ef9a9a;font-size:0.85rem;">This action cannot be undone.</p>
+      <div class="pg-modal-actions">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:8080/api';
+    let currentTab = 'people';
+    let editingId = null;
+    let deletingId = null;
+    let deleteType = null;
+    let allPersons = [];
+    let allGroups = [];
+
+    // ── INIT ──
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAll();
+      document.getElementById('pg-search').addEventListener('input', renderCurrent);
+      document.addEventListener('click', e => {
+        if (!document.getElementById('pg-tab-toggle').contains(e.target))
+          document.getElementById('pg-tab-dropdown').classList.remove('open');
+      });
+    });
+
+    async function loadAll() {
+      await Promise.all([fetchPersons(), fetchGroups()]);
+      renderCurrent();
+    }
+
+    async function fetchPersons() {
+      try {
+        const res = await fetch(`${API}/people`);
+        allPersons = res.ok ? await res.json() : [];
+      } catch { allPersons = []; }
+    }
+
+    async function fetchGroups() {
+      try {
+        const res = await fetch(`${API}/groups`);
+        allGroups = res.ok ? await res.json() : [];
+      } catch { allGroups = []; }
+    }
+
+    // ── TAB ──
+    function toggleTabDropdown() {
+      document.getElementById('pg-tab-dropdown').classList.toggle('open');
+    }
+
+    function switchTab(tab, e) {
+      e.stopPropagation();
+      currentTab = tab;
+      document.getElementById('pg-tab-label').textContent = tab === 'people' ? 'People' : 'Groups';
+      document.getElementById('tab-btn-people').classList.toggle('active', tab === 'people');
+      document.getElementById('tab-btn-groups').classList.toggle('active', tab === 'groups');
+      document.getElementById('btn-pg-add').textContent = tab === 'people' ? '+ Add Person' : '+ Add Group';
+      document.getElementById('pg-tab-dropdown').classList.remove('open');
+      document.getElementById('pg-search').value = '';
+      renderCurrent();
+    }
+
+    function renderCurrent() {
+      currentTab === 'people' ? renderPeople() : renderGroups();
+    }
+
+    // ── PEOPLE ──
+    function renderPeople() {
+      const q = document.getElementById('pg-search').value.toLowerCase();
+      const list = allPersons.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(q));
+      const area = document.getElementById('pg-content');
+      if (!list.length) {
+        area.innerHTML = `<div class="pg-empty">${q ? 'No people match your search.' : 'No people yet. Click <strong>+ Add Person</strong> to get started.'}</div>`;
+        return;
+      }
+      area.innerHTML = list.map(personCard).join('');
+    }
+
+    function personCard(p) {
+      const name = `${p.firstName} ${p.lastName}`;
+      const initials = p.initials || getInitials(p.firstName, p.lastName);
+      const safeName = name.replace(/'/g, "\\'");
+      return `
+        <div class="pg-card" id="card-p-${p.personId}">
+          <div class="pg-card-header">
+            <div class="pg-initials">${initials}</div>
+            <div class="pg-card-name">${name}</div>
+            <div class="pg-card-actions">
+              <button class="btn-pg-view" onclick="togglePersonBody('${p.personId}')">👁 View All</button>
+              <button class="btn-pg-icon btn-pg-edit" onclick="openEditPerson('${p.personId}')" title="Edit">✏️</button>
+              <button class="btn-pg-icon btn-pg-delete" onclick="openDeletePerson('${p.personId}','${safeName}')" title="Delete">🗑️</button>
+            </div>
+          </div>
+          <div class="pg-card-body" id="body-p-${p.personId}">
+            <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Loading entries…</p>
+          </div>
+        </div>`;
+    }
+
+    async function togglePersonBody(personId) {
+      const body = document.getElementById(`body-p-${personId}`);
+      const isOpen = body.classList.contains('open');
+      document.querySelectorAll('.pg-card-body.open').forEach(b => b.classList.remove('open'));
+      if (isOpen) return;
+      body.classList.add('open');
+      body.innerHTML = `<p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Loading entries…</p>`;
+      try {
+        const res = await fetch(`${API}/persons/${personId}/entries`);
+        const entries = res.ok ? await res.json() : [];
+        body.innerHTML = entriesTable(entries, personId);
+      } catch {
+        body.innerHTML = entriesTable([], personId);
+      }
+    }
+
+    // ── GROUPS ──
+    function renderGroups() {
+      const q = document.getElementById('pg-search').value.toLowerCase();
+      const list = allGroups.filter(g => g.groupName.toLowerCase().includes(q));
+      const area = document.getElementById('pg-content');
+      if (!list.length) {
+        area.innerHTML = `<div class="pg-empty">${q ? 'No groups match your search.' : 'No groups yet. Click <strong>+ Add Group</strong> to get started.'}</div>`;
+        return;
+      }
+      area.innerHTML = list.map(groupCard).join('');
+    }
+
+    function groupCard(g) {
+      const initials = groupInitials(g.groupName);
+      const memberCount = (g.members || []).length;
+      const safeName = g.groupName.replace(/'/g, "\\'");
+      return `
+        <div class="pg-card" id="card-g-${g.groupId}">
+          <div class="pg-card-header">
+            <div class="pg-initials">${initials}</div>
+            <div class="pg-card-name">${g.groupName}</div>
+            <span class="pg-entry-badge">${memberCount} Member${memberCount !== 1 ? 's' : ''}</span>
+            <div class="pg-card-actions">
+              <button class="btn-pg-view" onclick="toggleGroupBody('${g.groupId}')">👁 View All</button>
+              <button class="btn-pg-icon btn-pg-edit" onclick="openEditGroup('${g.groupId}')" title="Edit">✏️</button>
+              <button class="btn-pg-icon btn-pg-delete" onclick="openDeleteGroup('${g.groupId}','${safeName}')" title="Delete">🗑️</button>
+            </div>
+          </div>
+          <div class="pg-card-body" id="body-g-${g.groupId}">
+            <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Loading…</p>
+          </div>
+        </div>`;
+    }
+
+    async function toggleGroupBody(groupId) {
+      const body = document.getElementById(`body-g-${groupId}`);
+      const isOpen = body.classList.contains('open');
+      document.querySelectorAll('.pg-card-body.open').forEach(b => b.classList.remove('open'));
+      if (isOpen) return;
+      body.classList.add('open');
+
+      const group = allGroups.find(g => g.groupId === groupId);
+      const members = group?.members || [];
+      const nonMembers = allPersons.filter(p => !members.find(m => m.personId === p.personId));
+
+      const membersHtml = members.length
+        ? members.map(m => `
+            <div class="pg-member-chip">
+              <span>${m.firstName} ${m.lastName}</span>
+              <button onclick="removeMember('${groupId}','${m.personId}')" title="Remove">✕</button>
+            </div>`).join('')
+        : '<span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">No members yet.</span>';
+
+      const addRow = nonMembers.length ? `
+        <div class="pg-add-member-row">
+          <select id="add-member-sel-${groupId}">
+            <option value="">— Add member —</option>
+            ${nonMembers.map(p => `<option value="${p.personId}">${p.firstName} ${p.lastName}</option>`).join('')}
+          </select>
+          <button class="btn-pg-sm" onclick="addMember('${groupId}')">Add</button>
+        </div>` : '';
+
+      try {
+        const res = await fetch(`${API}/groups/${groupId}/entries`);
+        const entries = res.ok ? await res.json() : [];
+        body.innerHTML = `<div class="pg-members-list">${membersHtml}</div>${addRow}${entriesTable(entries, null)}`;
+      } catch {
+        body.innerHTML = `<div class="pg-members-list">${membersHtml}</div>${addRow}${entriesTable([], null)}`;
+      }
+    }
+
+    // ── ENTRIES TABLE ──
+    function entriesTable(entries, personId) {
+      if (!entries.length) return `<p style="color:rgba(255,255,255,0.4);font-size:0.9rem;padding:0.5rem 0;">No loan entries found.</p>`;
+      const rows = entries.map(e => {
+        const sc = (e.paymentStatus || 'UNPAID').toLowerCase().replace(' ', '-');
+        const b = e.borrowerPersonName || e.borrowerGroupName || '—';
+        const l = e.lenderPersonName || '—';
+        const boldB = personId && e.borrowerPersonId === personId ? `<strong>*${b}*</strong>` : b;
+        const boldL = personId && e.lenderPersonId === personId ? `<strong>*${l}*</strong>` : l;
+        const amtPaid = ((e.amountBorrowed || 0) - (e.amountRemaining || 0));
+        return `<tr>
+          <td><strong>${e.referenceId || '—'}</strong></td>
+          <td>${e.entryName || '—'}</td>
+          <td>${boldB}</td>
+          <td>${boldL}</td>
+          <td>${fmt(amtPaid)}</td>
+          <td>${fmt(e.amountRemaining)}</td>
+          <td><span class="status-badge ${sc}">${e.paymentStatus || 'UNPAID'}</span></td>
+        </tr>`;
+      }).join('');
+      return `<table class="pg-table">
+        <thead><tr>
+          <th>Ref. ID</th><th>Entry Name</th><th>Borrower</th>
+          <th>Lender</th><th>Amount Paid</th><th>Amount Remaining</th><th>Status</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    function fmt(n) {
+      return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+    }
+
+    // ── MEMBER ACTIONS ──
+    async function addMember(groupId) {
+      const sel = document.getElementById(`add-member-sel-${groupId}`);
+      if (!sel?.value) return;
+      try {
+        const res = await fetch(`${API}/memberships`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupId, personId: sel.value })
+        });
+        if (!res.ok) throw new Error();
+        toast('Member added!');
+        await fetchGroups();
+        const body = document.getElementById(`body-g-${groupId}`);
+        body.classList.remove('open');
+        toggleGroupBody(groupId);
+      } catch { toast('Failed to add member.', true); }
+    }
+
+    async function removeMember(groupId, personId) {
+      try {
+        const res = await fetch(`${API}/groups/${groupId}/members`);
+        const list = res.ok ? await res.json() : [];
+        const m = list.find(x => x.personId === personId);
+        if (!m) return;
+        await fetch(`${API}/memberships/${m.membershipId}`, { method: 'DELETE' });
+        toast('Member removed.');
+        await fetchGroups();
+        const body = document.getElementById(`body-g-${groupId}`);
+        body.classList.remove('open');
+        toggleGroupBody(groupId);
+      } catch { toast('Failed to remove member.', true); }
+    }
+
+    // ── PERSON MODAL ──
+    function openAddModal() {
+      if (currentTab === 'groups') { openAddGroup(); return; }
+      editingId = null;
+      document.getElementById('person-modal-title').textContent = 'Add Person';
+      ['p-firstName','p-lastName','p-contactInfo','p-notes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('person-modal').classList.add('open');
+    }
+
+    function openEditPerson(id) {
+      const p = allPersons.find(x => x.personId === id);
+      if (!p) return;
+      editingId = id;
+      document.getElementById('person-modal-title').textContent = 'Edit Person';
+      document.getElementById('p-firstName').value = p.firstName || '';
+      document.getElementById('p-lastName').value = p.lastName || '';
+      document.getElementById('p-contactInfo').value = p.contactInfo || '';
+      document.getElementById('p-notes').value = p.notes || '';
+      document.getElementById('person-modal').classList.add('open');
+    }
+
+    function closePersonModal() { document.getElementById('person-modal').classList.remove('open'); }
+
+    async function savePersonModal() {
+      const body = {
+        firstName: document.getElementById('p-firstName').value.trim(),
+        lastName: document.getElementById('p-lastName').value.trim(),
+        contactInfo: document.getElementById('p-contactInfo').value.trim(),
+        notes: document.getElementById('p-notes').value.trim()
+      };
+      if (!body.firstName || !body.lastName) { toast('First and last name are required.', true); return; }
+      try {
+        const url = editingId ? `${API}/persons/${editingId}` : `${API}/persons`;
+        const res = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error();
+        toast(editingId ? 'Person updated!' : 'Person added!');
+        closePersonModal();
+        await fetchPersons();
+        renderPeople();
+      } catch { toast('Failed to save person.', true); }
+    }
+
+    // ── GROUP MODAL ──
+    function openAddGroup() {
+      editingId = null;
+      document.getElementById('group-modal-title').textContent = 'Add Group';
+      ['g-groupName','g-notes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('group-modal').classList.add('open');
+    }
+
+    function openEditGroup(id) {
+      const g = allGroups.find(x => x.groupId === id);
+      if (!g) return;
+      editingId = id;
+      document.getElementById('group-modal-title').textContent = 'Edit Group';
+      document.getElementById('g-groupName').value = g.groupName || '';
+      document.getElementById('g-notes').value = g.notes || '';
+      document.getElementById('group-modal').classList.add('open');
+    }
+
+    function closeGroupModal() { document.getElementById('group-modal').classList.remove('open'); }
+
+    async function saveGroupModal() {
+      const body = {
+        groupName: document.getElementById('g-groupName').value.trim(),
+        notes: document.getElementById('g-notes').value.trim()
+      };
+      if (!body.groupName) { toast('Group name is required.', true); return; }
+      try {
+        const url = editingId ? `${API}/groups/${editingId}` : `${API}/groups`;
+        const res = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error();
+        toast(editingId ? 'Group updated!' : 'Group added!');
+        closeGroupModal();
+        await fetchGroups();
+        renderGroups();
+      } catch { toast('Failed to save group.', true); }
+    }
+
+    // ── DELETE ──
+    function openDeletePerson(id, name) { deletingId = id; deleteType = 'person'; document.getElementById('delete-target-name').textContent = name; document.getElementById('delete-modal').classList.add('open'); }
+    function openDeleteGroup(id, name)  { deletingId = id; deleteType = 'group';  document.getElementById('delete-target-name').textContent = name; document.getElementById('delete-modal').classList.add('open'); }
+    function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); }
+
+    async function confirmDelete() {
+      const url = deleteType === 'person' ? `${API}/persons/${deletingId}` : `${API}/groups/${deletingId}`;
+      try {
+        const res = await fetch(url, { method: 'DELETE' });
+        if (!res.ok) throw new Error();
+        toast(deleteType === 'person' ? 'Person deleted.' : 'Group deleted.');
+        closeDeleteModal();
+        if (deleteType === 'person') { await fetchPersons(); renderPeople(); }
+        else { await fetchGroups(); renderGroups(); }
+      } catch { toast('Failed to delete.', true); }
+    }
+
+    // ── UTILS ──
+    function getInitials(f, l) {
+      return `${f} ${l}`.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || '').join('').slice(0, 3);
+    }
+
+    function groupInitials(name) {
+      return name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || '').join('').slice(0, 2);
+    }
+
+    function toast(msg, isError = false) {
+      const c = document.getElementById('pg-toasts');
+      const t = document.createElement('div');
+      t.className = `pg-toast${isError ? ' error' : ''}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    }
+  </script>
 </body>
 </html>
