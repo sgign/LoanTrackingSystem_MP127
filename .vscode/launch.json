@@ -1,5 +1,15 @@
     {
         "configurations": [
+            {
+                "type": "jdk",
+                "request": "launch",
+                "name": "Launch Java App"
+            },
+            {
+                "type": "jdk",
+                "request": "launch",
+                "name": "Launch Java App"
+            },
             
 
             {
