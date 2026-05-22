@@ -133,8 +133,8 @@
                 row.className = 'transaction-row';
                 row.style.cursor = 'pointer';
                 row.onclick = () => {
-                    window.location.href = `entry-detail.html?id=${loan.entryId}`;
-                };
+                        window.location.href = `payment-records.html?id=${loan.entryId}`;
+                    };
 
                 const statusClass = (loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-');
                 
