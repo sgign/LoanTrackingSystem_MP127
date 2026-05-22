@@ -1,7 +1,9 @@
 # Loan Tracking System
 ## Entity Relationship Diagram (ERD) Technical Documentation
 
-![Entity Relationship Diagram](../ERD_Diagram.png)
+<div align="center">
+  <img src="ERD_Diagram.png" width="700px" alt="Entity Relationship Diagram">
+</div>
 
 ---
 
