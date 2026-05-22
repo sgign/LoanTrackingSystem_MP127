@@ -156,11 +156,7 @@
 
                 recentLoans.forEach(loan => {
                     const row = document.createElement('tr');
-                    row.style.cursor = 'pointer';
-                    row.className = 'transaction-row';
-                    row.onclick = () => {
-                        window.location.href = `entry-detail.html?id=${loan.entryId}`;
-                    };
+                    // Display-only row — no click navigation
 
                     const amountPaid = (loan.amountBorrowed || 0) - (loan.amountRemaining || 0);
                     const statusClass = (loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-');
