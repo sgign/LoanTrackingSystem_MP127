@@ -633,7 +633,7 @@
       body.classList.add('open');
       body.innerHTML = `<p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Loading entries…</p>`;
       try {
-        const res = await fetch(`${API}/persons/${personId}/entries`);
+        const res = await fetch(`${API}/people/${personId}/entries`);
         const entries = res.ok ? await res.json() : [];
         body.innerHTML = entriesTable(entries, personId);
       } catch {
@@ -811,7 +811,7 @@
       };
       if (!body.firstName || !body.lastName) { toast('First and last name are required.', true); return; }
       try {
-        const url = editingId ? `${API}/persons/${editingId}` : `${API}/persons`;
+        const url = editingId ? `${API}/people/${editingId}` : `${API}/people`;
         const res = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!res.ok) throw new Error();
         toast(editingId ? 'Person updated!' : 'Person added!');
@@ -864,7 +864,7 @@
     function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); }
 
     async function confirmDelete() {
-      const url = deleteType === 'person' ? `${API}/persons/${deletingId}` : `${API}/groups/${deletingId}`;
+      const url = deleteType === 'person' ? `${API}/people/${deletingId}` : `${API}/groups/${deletingId}`;
       try {
         const res = await fetch(url, { method: 'DELETE' });
         if (!res.ok) throw new Error();

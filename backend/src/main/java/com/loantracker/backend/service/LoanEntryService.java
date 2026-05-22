@@ -38,6 +38,20 @@ public class LoanEntryService {
         return convertToDto(entry);
     }
 
+    @Transactional(readOnly = true)
+    public List<LoanEntryDto> getLoansByPersonId(UUID personId) {
+        return loanEntryRepository.findByPersonId(personId).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanEntryDto> getLoansByGroupId(UUID groupId) {
+        return loanEntryRepository.findByGroupId(groupId).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public LoanEntryDto createLoan(LoanEntryDto dto) {
         LoanEntry entry = new LoanEntry();
