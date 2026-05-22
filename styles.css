@@ -127,4 +127,42 @@ p {
         padding: 0.75rem 2rem;
         font-size: 0.9rem;
     }
+
+    .navbar {
+        gap: 1rem;
+        padding: 0.5rem 1.5rem;
+    }
 }
+
+/* Navigation Bar */
+.navbar {
+    position: absolute;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2rem;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.navbar a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: color 0.3s ease, transform 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+.navbar a:hover {
+    color: #90ee90;
+    transform: translateY(-1px);
+}
+
