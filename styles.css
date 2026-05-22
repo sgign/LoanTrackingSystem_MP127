@@ -13,7 +13,8 @@ html, body {
 }
 
 body {
-    background: radial-gradient(120% 120% at 50% 0%, #0d1510 0%, #060907 100%);
+    background: url('Background.png') no-repeat center center fixed;
+    background-size: cover;
     background-color: #060907;
     min-height: 100vh;
     display: flex;
@@ -228,7 +229,8 @@ body::after {
 }
 
 .btn-new-entry {
-    background: rgba(61, 122, 70, 0.9);
+    background: url('Green Gradient.png') no-repeat center;
+    background-size: cover;
     color: #ffffff;
     border: 2px solid #ffffff;
     border-radius: 50px;
@@ -236,7 +238,7 @@ body::after {
     font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, filter 0.2s ease;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -244,7 +246,7 @@ body::after {
 }
 
 .btn-new-entry:hover {
-    background: rgba(70, 140, 80, 1);
+    filter: brightness(1.1);
     transform: translateY(-2px);
 }
 
@@ -318,3 +320,302 @@ body::after {
         justify-content: center;
     }
 }
+
+/* Form & Detail Styling */
+.form-container {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2.5rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.form-group label span.required {
+    color: #ff8a80;
+    margin-left: 2px;
+}
+
+.form-input, .form-select, .form-textarea {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    color: #ffffff;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+}
+
+.form-select option {
+    background-color: #121814;
+    color: #ffffff;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.radio-label input {
+    accent-color: #4caf50;
+    width: 18px;
+    height: 18px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+.btn {
+    border-radius: 50px;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s, filter 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: url('Green Gradient.png') no-repeat center;
+    background-size: cover;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-danger {
+    background: #e53935;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background: #ef5350;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.unpaid {
+    background: rgba(229, 57, 53, 0.2);
+    color: #ef5350;
+    border: 1px solid rgba(239, 83, 80, 0.3);
+}
+
+.status-badge.partially-paid {
+    background: rgba(255, 179, 0, 0.2);
+    color: #ffca28;
+    border: 1px solid rgba(255, 202, 40, 0.3);
+}
+
+.status-badge.paid {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+    border: 1px solid rgba(129, 199, 132, 0.3);
+}
+
+/* Image Upload & Preview */
+.image-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.image-preview-container {
+    width: 100%;
+    max-width: 300px;
+    height: 200px;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.image-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.image-preview-placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Info Banner */
+.info-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(129, 199, 132, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
+.info-banner-icon {
+    font-size: 1.5rem;
+}
+
+.info-banner-content {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.info-banner-content strong {
+    color: #ffffff;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Search & Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+    z-index: 2;
+}
+
+.filter-input {
+    flex: 1;
+    min-width: 250px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+}
+
+.filter-select {
+    min-width: 160px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-select option {
+    background-color: #121814;
+    color: #ffffff;
+}
+
+.transactions-table tr.transaction-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+
