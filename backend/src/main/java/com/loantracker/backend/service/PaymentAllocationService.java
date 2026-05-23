@@ -38,6 +38,14 @@ public class PaymentAllocationService {
     }
 
     @Transactional
+    public void deleteAllocationsByEntryId(UUID entryId) {
+        List<PaymentAllocation> allocations = paymentAllocationRepository.findByLoanEntry_EntryId(entryId);
+        if (!allocations.isEmpty()) {
+            paymentAllocationRepository.deleteAll(allocations);
+        }
+    }
+
+    @Transactional
     public List<PaymentAllocationDto> saveAllocations(UUID entryId, List<PaymentAllocationDto> dtos, String splitType, Double totalAmount) {
         LoanEntry entry = loanEntryRepository.findById(entryId)
                 .orElseThrow(() -> new IllegalArgumentException("Loan entry not found with ID: " + entryId));

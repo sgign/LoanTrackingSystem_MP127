@@ -976,12 +976,17 @@
       const url = deleteType === 'person' ? `${API}/people/${deletingId}` : `${API}/groups/${deletingId}`;
       try {
         const res = await fetch(url, { method: 'DELETE' });
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(errText || 'Cannot delete this record because it is currently linked to an active loan entry or payment.');
+        }
         toast(deleteType === 'person' ? 'Person deleted.' : 'Group deleted.');
         closeDeleteModal();
         if (deleteType === 'person') { await fetchPersons(); renderPeople(); }
         else { await fetchGroups(); renderGroups(); }
-      } catch { toast('Failed to delete.', true); }
+      } catch(e) { 
+          toast(e.message || 'Failed to delete.', true); 
+      }
     }
 
     // ── UTILS ──

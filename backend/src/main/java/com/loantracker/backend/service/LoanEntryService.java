@@ -136,6 +136,10 @@ public class LoanEntryService {
         if (!loanEntryRepository.existsById(entryId)) {
             throw new IllegalArgumentException("Loan entry not found with ID: " + entryId);
         }
+        
+        installmentPlanService.deletePlanByEntryId(entryId);
+        paymentAllocationService.deleteAllocationsByEntryId(entryId);
+        
         loanEntryRepository.deleteById(entryId);
     }
 

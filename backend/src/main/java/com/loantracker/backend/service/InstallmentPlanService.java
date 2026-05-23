@@ -28,7 +28,7 @@ public class InstallmentPlanService {
     private final LoanEntryRepository loanEntryRepository;
     private final PaymentRepository paymentRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public InstallmentPlanDto getPlanByEntryId(UUID entryId) {
         Optional<InstallmentPlan> planOpt = installmentPlanRepository.findByLoanEntry_EntryId(entryId);
         if (planOpt.isEmpty()) {
@@ -156,19 +156,35 @@ public class InstallmentPlanService {
                 remainingPaid -= required;
             } else {
                 // Calculate period start date
-                Date periodStart;
+                Date rawPeriodStart;
                 if (i == 0) {
-                    periodStart = plan.getStartDate();
+                    rawPeriodStart = plan.getStartDate();
                 } else {
-                    periodStart = terms.get(i - 1).getDueDate();
+                    rawPeriodStart = terms.get(i - 1).getDueDate();
                 }
+
+                Calendar pCal = Calendar.getInstance();
+                pCal.setTime(rawPeriodStart);
+                pCal.set(Calendar.HOUR_OF_DAY, 0);
+                pCal.set(Calendar.MINUTE, 0);
+                pCal.set(Calendar.SECOND, 0);
+                pCal.set(Calendar.MILLISECOND, 0);
+                Date periodStart = pCal.getTime();
+
+                Calendar dCal = Calendar.getInstance();
+                dCal.setTime(term.getDueDate());
+                dCal.set(Calendar.HOUR_OF_DAY, 0);
+                dCal.set(Calendar.MINUTE, 0);
+                dCal.set(Calendar.SECOND, 0);
+                dCal.set(Calendar.MILLISECOND, 0);
+                Date dueDate = dCal.getTime();
 
                 // If term has a partial payment, it remains unpaid or delinquent but does consume the partial amount
                 remainingPaid = 0; // consumed
 
                 if (todayMidnight.before(periodStart)) {
                     term.setStatus(InstallmentTermStatus.NOT_STARTED);
-                } else if (todayMidnight.after(term.getDueDate())) {
+                } else if (todayMidnight.after(dueDate)) {
                     term.setStatus(InstallmentTermStatus.DELINQUENT);
                 } else {
                     term.setStatus(InstallmentTermStatus.UNPAID);
