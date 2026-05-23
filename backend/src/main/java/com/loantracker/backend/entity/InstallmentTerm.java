@@ -33,7 +33,7 @@ public class InstallmentTerm {
     private Date dueDate;
 
     @Column(name = "status")
-    private String status;
+    private InstallmentTermStatus status;
 
     @Column(name = "notes")
     private String notes;

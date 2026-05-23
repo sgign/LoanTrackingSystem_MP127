@@ -105,6 +105,8 @@
                 <div class="summary-item">Lender: <strong id="disp-lender">---</strong></div>
                 <div class="summary-item">Borrowed: <strong id="disp-total" style="color: #ffca28;">₱0.00</strong></div>
                 <div class="summary-item">Remaining: <strong id="disp-rem" style="color: #ef5350;">₱0.00</strong></div>
+                <div class="summary-item installment-field" style="display: none;">Next Term: <strong id="disp-next-term">---</strong></div>
+                <div class="summary-item installment-field" style="display: none;">Term Amount: <strong id="disp-term-amount" style="color: #ffca28;">₱0.00</strong></div>
             </div>
 
             <div class="progress-wrapper">
@@ -120,7 +122,10 @@
             <div class="transactions-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3>PAYMENT HISTORY</h3>
-                    <button class="btn btn-primary" onclick="openModal()">+ Add Payment</button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button id="btn-skip-term" class="btn btn-secondary" style="display: none;" onclick="confirmSkipTerm()">Skip Term</button>
+                        <button class="btn btn-primary" onclick="openModal()">+ Add Payment</button>
+                    </div>
                 </div>
                 
                 <table class="transactions-table">
@@ -201,6 +206,32 @@
 
     function goToEdit() { window.location.href = `entry-detail.html?id=${entryId}`; }
 
+    async function confirmSkipTerm() {
+        const btn = document.getElementById('btn-skip-term');
+        const termId = btn.dataset.termId;
+        const termNumber = btn.dataset.termNumber;
+        if (!termId) return;
+
+        if (!confirm(`Are you sure you want to skip Term ${termNumber}? This will mark it as SKIPPED and update the installment statuses.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/installments/terms/${termId}/skip`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                alert(`Term ${termNumber} successfully marked as Skipped.`);
+                location.reload();
+            } else {
+                const errText = await res.text();
+                alert('Failed to skip term: ' + errText);
+            }
+        } catch (err) {
+            alert('Network error: ' + err.message);
+        }
+    }
+
     function openModal() { document.getElementById('paymentModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
 
@@ -238,6 +269,33 @@ async function loadDashboard() {
         document.getElementById('progressFill').style.width = `${percent}%`;
         document.getElementById('disp-percent').innerText = `${percent}%`;
         document.getElementById('disp-repaid').innerText = `Repaid: ${formatCurrency(repaid)}`;
+
+        // Part 1.5: Handle Installment Expense details & Skip Term button
+        const btnSkipTerm = document.getElementById('btn-skip-term');
+        const instFields = document.querySelectorAll('.installment-field');
+        if (loan.transactionType === "Installment Expense" && loan.installmentPlan && loan.installmentPlan.terms) {
+            instFields.forEach(el => el.style.display = 'block');
+            
+            // Find the first term that is not PAID and not SKIPPED
+            const currentTerm = loan.installmentPlan.terms.find(t => t.status !== "PAID" && t.status !== "SKIPPED");
+            if (currentTerm) {
+                btnSkipTerm.style.display = 'inline-flex';
+                btnSkipTerm.textContent = `Skip Term ${currentTerm.termNumber}`;
+                btnSkipTerm.dataset.termId = currentTerm.termId;
+                btnSkipTerm.dataset.termNumber = currentTerm.termNumber;
+
+                const dueDateStr = new Date(currentTerm.dueDate).toLocaleDateString('en-PH', {month: 'short', day: 'numeric', year: 'numeric'});
+                document.getElementById('disp-next-term').innerText = `Term ${currentTerm.termNumber} (Due ${dueDateStr})`;
+                document.getElementById('disp-term-amount').innerText = formatCurrency(loan.installmentPlan.amountPerTerm);
+            } else {
+                btnSkipTerm.style.display = 'none';
+                document.getElementById('disp-next-term').innerText = "All Paid/Settled";
+                document.getElementById('disp-term-amount').innerText = "—";
+            }
+        } else {
+            btnSkipTerm.style.display = 'none';
+            instFields.forEach(el => el.style.display = 'none');
+        }
     } catch (err) {
         console.error("Loan details failed:", err);
         document.getElementById('disp-borrower').innerText = "Loan Not Found";
