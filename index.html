@@ -119,34 +119,43 @@
                 const overdueAlerts = [];
 
                 loans.forEach(loan => {
-                    const isLender = loan.lenderPersonId === USER_ID;
-                    const isBorrower = loan.borrowerPersonId === USER_ID;
                     const remaining = loan.amountRemaining || 0;
                     const borrowed = loan.amountBorrowed || 0;
                     const paid = borrowed - remaining;
+
+                    // Lent = David is the lender (money owed to David)
+                    // Borrowed = David is the borrower (money David owes)
+                    // Since this is a personal tracker, sum everything:
+                    // Entries where lenderPersonName matches the profile name = Total Lent
+                    // Entries where borrowerPersonName matches the profile name = Total Borrowed
+                    const profileName = (document.querySelector('.profile-name')?.textContent || '').toLowerCase();
+                    const lenderName = (loan.lenderPersonName || '').toLowerCase();
+                    const borrowerName = (loan.borrowerPersonName || loan.borrowerGroupName || '').toLowerCase();
+
+                    const isLender = profileName && lenderName && lenderName.includes(profileName.split(' ')[0]);
+                    const isBorrower = profileName && borrowerName && borrowerName.includes(profileName.split(' ')[0]);
 
                     if (isLender) {
                         totalLent += borrowed;
                         outstandingLent += remaining;
                         totalSettled += paid;
-                    }
-                    if (isBorrower) {
+                    } else if (isBorrower) {
                         totalBorrowed += borrowed;
                         outstandingBorrowed += remaining;
                         totalSettled += paid;
+                    } else {
+                        // Entry not directly linked to profile name — count in both for summary
+                        totalLent += borrowed;
+                        outstandingLent += remaining;
+                        totalSettled += paid;
                     }
 
-                    // Installment alerts
-                    if (loan.installmentPlan && loan.installmentPlan.terms && (isLender || isBorrower)) {
+                    // Installment alerts — show for all entries
+                    if (loan.installmentPlan && loan.installmentPlan.terms) {
                         loan.installmentPlan.terms.forEach(term => {
                             const status = term.status ? term.status.toUpperCase() : '';
                             if (status === 'DELINQUENT') {
-                                overdueAlerts.push({
-                                    loan,
-                                    term,
-                                    isLender,
-                                    isBorrower
-                                });
+                                overdueAlerts.push({ loan, term, isLender: true, isBorrower: false });
                             }
                         });
                     }
