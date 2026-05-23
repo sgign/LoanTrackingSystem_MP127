@@ -751,8 +751,8 @@
         const sc = displayStatus.toLowerCase().replace(' ', '-');
         const b = e.borrowerPersonName || e.borrowerGroupName || '—';
         const l = e.lenderPersonName || '—';
-        const boldB = personId && e.borrowerPersonId === personId ? `<strong>*${b}*</strong>` : b;
-        const boldL = personId && e.lenderPersonId === personId ? `<strong>*${l}*</strong>` : l;
+        const boldB = personId && e.borrowerPersonId === personId ? `<strong>${b}</strong>` : b;
+        const boldL = personId && e.lenderPersonId === personId ? `<strong>${l}</strong>` : l;
         const amtPaid = ((e.amountBorrowed || 0) - (e.amountRemaining || 0));
         return `<tr>
           <td><strong>${e.referenceId || '—'}</strong></td>
