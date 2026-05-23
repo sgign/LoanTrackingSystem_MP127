@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,12 +8,14 @@
     <meta name="description" content="Overview dashboard of your loan tracking.">
     <link rel="stylesheet" href="styles.css?v=4">
 </head>
+
 <body>
     <header class="header">
         <div class="profile">
             <div class="profile-avatar">
                 <svg viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    <path
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
             </div>
             <span class="profile-name">David Pasumbal</span>
@@ -44,18 +47,20 @@
                 <span class="metric-value" id="total-outstanding">0.00</span>
             </div>
             <div class="metric-card">
-                <span class="metric-label">Total Settleed</span>
+                <span class="metric-label">Total Settled</span>
                 <span class="metric-value" id="total-settled">0</span>
             </div>
         </section>
 
         <section class="transactions-section">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div class="section-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h2 class="section-title" style="margin-bottom: 0;">Recent Transactions</h2>
                 <div class="actions-header" style="display: flex; gap: 1rem; align-items: center;">
                     <a href="entry-detail.html" class="btn-new-entry">+ New Entry</a>
                     <a href="all-payments.html" class="btn-view-all" style="display: flex; align-items: center;">
-                        <img src="greenview.png" style="width: 18px; height: 18px; margin-right: 0.5rem;" alt="View All">
+                        <img src="greenview.png" style="width: 18px; height: 18px; margin-right: 0.5rem;"
+                            alt="View All">
                         View All
                     </a>
                 </div>
@@ -111,6 +116,7 @@
                 }
 
                 // Calculate metrics
+                // Calculate metrics
                 let totalLent = 0;
                 let totalBorrowed = 0;
                 let outstandingLent = 0;
@@ -118,20 +124,17 @@
                 let totalSettled = 0;
                 const overdueAlerts = [];
 
+                const profileName = (document.querySelector('.profile-name')?.textContent || '').toLowerCase().trim();
+
                 loans.forEach(loan => {
                     const remaining = loan.amountRemaining || 0;
                     const borrowed = loan.amountBorrowed || 0;
                     const paid = borrowed - remaining;
 
-                    // Lent = David is the lender (money owed to David)
-                    // Borrowed = David is the borrower (money David owes)
-                    // Since this is a personal tracker, sum everything:
-                    // Entries where lenderPersonName matches the profile name = Total Lent
-                    // Entries where borrowerPersonName matches the profile name = Total Borrowed
-                    const profileName = (document.querySelector('.profile-name')?.textContent || '').toLowerCase();
                     const lenderName = (loan.lenderPersonName || '').toLowerCase();
                     const borrowerName = (loan.borrowerPersonName || loan.borrowerGroupName || '').toLowerCase();
 
+                    // Check if current profile is Lender or Borrower
                     const isLender = profileName && lenderName && lenderName.includes(profileName.split(' ')[0]);
                     const isBorrower = profileName && borrowerName && borrowerName.includes(profileName.split(' ')[0]);
 
@@ -143,11 +146,6 @@
                         totalBorrowed += borrowed;
                         outstandingBorrowed += remaining;
                         totalSettled += paid;
-                    } else {
-                        // Entry not directly linked to profile name — count in both for summary
-                        totalLent += borrowed;
-                        outstandingLent += remaining;
-                        totalSettled += paid;
                     }
 
                     // Installment alerts — show for all entries
@@ -155,18 +153,24 @@
                         loan.installmentPlan.terms.forEach(term => {
                             const status = term.status ? term.status.toUpperCase() : '';
                             if (status === 'DELINQUENT') {
-                                overdueAlerts.push({ loan, term, isLender: true, isBorrower: false });
+                                overdueAlerts.push({ loan, term, isLender, isBorrower });
                             }
                         });
                     }
                 });
 
-                const totalOutstanding = outstandingLent + outstandingBorrowed;
+                // CHOOSE ONE OPTION BELOW FOR TOTAL OUTSTANDING:
+
+                // Option A: Net Balance (Borrowed Debt minus Lent Receivables) -> Result: 44,500
+                const totalOutstanding = outstandingBorrowed - outstandingLent;
+
+                // Option B: Pure True Debt Remaining (Only what David owes to others) -> Result: 47,500
+                // const totalOutstanding = outstandingBorrowed;
 
                 // Update UI elements
                 document.getElementById('total-lent').textContent = formatCurrency(totalLent);
                 document.getElementById('total-borrowed').textContent = formatCurrency(totalBorrowed);
-                
+
                 const outstandingEl = document.getElementById('total-outstanding');
                 outstandingEl.textContent = formatCurrency(totalOutstanding);
 
@@ -185,10 +189,10 @@
                     };
 
                     const amt = formatCurrency(alert.loan.installmentPlan.amountPerTerm);
-                    const lenderOrBorrowerMsg = alert.isBorrower 
+                    const lenderOrBorrowerMsg = alert.isBorrower
                         ? `You owe <strong>₱${amt}</strong> to <strong>${alert.loan.lenderPersonName || 'Lender'}</strong>`
                         : `<strong>${alert.loan.borrowerPersonName || alert.loan.borrowerGroupName || 'Borrower'}</strong> owes you <strong>₱${amt}</strong>`;
-                    
+
                     const formattedDate = new Date(alert.term.dueDate).toLocaleDateString('en-US', {
                         month: 'short', day: 'numeric', year: 'numeric'
                     });
@@ -221,7 +225,7 @@
                     // Display-only row — no click navigation
 
                     const amountPaid = (loan.amountBorrowed || 0) - (loan.amountRemaining || 0);
-                    
+
                     // Display status directly from database (UNPAID, PARTIALLY PAID, PAID)
                     let displayStatus = loan.paymentStatus || 'UNPAID';
                     if (Math.round(loan.amountRemaining || 0) <= 0) {
@@ -256,4 +260,5 @@
         document.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
 </body>
+
 </html>
