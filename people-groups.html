@@ -570,7 +570,7 @@
         const res = await fetch(`${API}/entries`);
         if (!res.ok) return;
         const loans = await res.json();
-        const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID').length;
+        const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID' && Math.round(l.amountRemaining || 0) > 0).length;
         const activeBadge = document.getElementById('active-loans-count');
         if (activeBadge) {
           activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
@@ -744,7 +744,11 @@
     function entriesTable(entries, personId) {
       if (!entries.length) return `<p style="color:rgba(255,255,255,0.4);font-size:0.9rem;padding:0.5rem 0;">No loan entries found.</p>`;
       const rows = entries.map(e => {
-        const sc = (e.paymentStatus || 'UNPAID').toLowerCase().replace(' ', '-');
+        let displayStatus = e.paymentStatus || 'UNPAID';
+        if (Math.round(e.amountRemaining || 0) <= 0) {
+            displayStatus = 'PAID';
+        }
+        const sc = displayStatus.toLowerCase().replace(' ', '-');
         const b = e.borrowerPersonName || e.borrowerGroupName || '—';
         const l = e.lenderPersonName || '—';
         const boldB = personId && e.borrowerPersonId === personId ? `<strong>*${b}*</strong>` : b;
@@ -757,7 +761,7 @@
           <td>${boldL}</td>
           <td>${fmt(amtPaid)}</td>
           <td>${fmt(e.amountRemaining)}</td>
-          <td><span class="status-badge ${sc}">${e.paymentStatus || 'UNPAID'}</span></td>
+          <td><span class="status-badge ${sc}">${displayStatus}</span></td>
         </tr>`;
       }).join('');
       return `<table class="pg-table">

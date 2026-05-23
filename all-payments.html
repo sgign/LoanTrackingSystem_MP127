@@ -137,7 +137,7 @@
                 allLoans = await response.json();
                 
                 // Update active loans badge
-                const activeLoansCount = allLoans.filter(l => l.paymentStatus !== 'PAID').length;
+                const activeLoansCount = allLoans.filter(l => l.paymentStatus !== 'PAID' && Math.round(l.amountRemaining || 0) > 0).length;
                 const activeBadge = document.getElementById('active-loans-count');
                 if (activeBadge) {
                     activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
@@ -226,7 +226,11 @@
             }
 
             loans.forEach(loan => {
-                const statusClass = (loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-');
+                let displayStatus = loan.paymentStatus || 'UNPAID';
+                if (Math.round(loan.amountRemaining || 0) <= 0) {
+                    displayStatus = 'PAID';
+                }
+                const statusClass = displayStatus.toLowerCase().replace(' ', '-');
                 const safeName = (loan.entryName || 'Unnamed').replace(/'/g, "\\'");
                 const repaid = (loan.amountBorrowed || 0) - (loan.amountRemaining || 0);
                 const refText = loan.referenceId ? `Ref ${loan.referenceId}` : '';
@@ -241,7 +245,7 @@
                             <span>${loan.entryName || 'Unnamed'}</span>
                             <span style="font-size: 0.85rem; font-weight: 500; color: rgba(255, 255, 255, 0.7);">${refText}</span>
                         </div>
-                        <span class="status-badge ${statusClass}" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); color: #fff;">${loan.paymentStatus || 'UNPAID'}</span>
+                        <span class="status-badge ${statusClass}" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); color: #fff;">${displayStatus}</span>
                         <div class="pg-card-actions">
                             <button class="btn-pg-view" onclick="toggleCardBody('${loan.entryId}', event)">
                                 <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor; margin-right: 4px;">

@@ -54,16 +54,19 @@ public class PaymentController {
             double currentRemaining = loanEntry.getAmountRemaining() != null ? loanEntry.getAmountRemaining() : 0.0;
             double paymentAmount = payment.getPaymentAmount() != null ? payment.getPaymentAmount() : 0.0;
             double newRemaining = Math.max(0.0, currentRemaining - paymentAmount);
-            loanEntry.setAmountRemaining(newRemaining);
             double amountBorrowed = loanEntry.getAmountBorrowed() != null ? loanEntry.getAmountBorrowed() : 0.0;
-            if (newRemaining <= 0) {
+            if (Math.round(newRemaining) <= 0) {
+                loanEntry.setAmountRemaining(0.0);
                 loanEntry.setPaymentStatus("PAID");
                 if (loanEntry.getDateFullyPaid() == null) {
                     loanEntry.setDateFullyPaid(new java.util.Date());
                 }
-            } else if (newRemaining < amountBorrowed) {
-                loanEntry.setPaymentStatus("PARTIALLY PAID");
-                loanEntry.setDateFullyPaid(null);
+            } else {
+                loanEntry.setAmountRemaining(newRemaining);
+                if (newRemaining < amountBorrowed) {
+                    loanEntry.setPaymentStatus("PARTIALLY PAID");
+                    loanEntry.setDateFullyPaid(null);
+                }
             }
             loanEntryRepository.save(loanEntry);
             paymentAllocationService.recalculateAllocationStatuses(entryId);
@@ -88,15 +91,18 @@ public class PaymentController {
                 double currentRemaining = loanEntry.getAmountRemaining() != null ? loanEntry.getAmountRemaining() : 0.0;
                 double amountBorrowed = loanEntry.getAmountBorrowed() != null ? loanEntry.getAmountBorrowed() : 0.0;
                 double newRemaining = Math.min(amountBorrowed, currentRemaining + paymentAmount);
-                loanEntry.setAmountRemaining(newRemaining);
-                if (newRemaining <= 0) {
+                if (Math.round(newRemaining) <= 0) {
+                    loanEntry.setAmountRemaining(0.0);
                     loanEntry.setPaymentStatus("PAID");
-                } else if (newRemaining < amountBorrowed) {
-                    loanEntry.setPaymentStatus("PARTIALLY PAID");
-                    loanEntry.setDateFullyPaid(null);
                 } else {
-                    loanEntry.setPaymentStatus("UNPAID");
-                    loanEntry.setDateFullyPaid(null);
+                    loanEntry.setAmountRemaining(newRemaining);
+                    if (newRemaining < amountBorrowed) {
+                        loanEntry.setPaymentStatus("PARTIALLY PAID");
+                        loanEntry.setDateFullyPaid(null);
+                    } else {
+                        loanEntry.setPaymentStatus("UNPAID");
+                        loanEntry.setDateFullyPaid(null);
+                    }
                 }
                 loanEntryRepository.save(loanEntry);
             }

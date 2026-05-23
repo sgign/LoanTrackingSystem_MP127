@@ -104,7 +104,7 @@
                 const loans = await response.json();
 
                 // Update active loans badge
-                const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID').length;
+                const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID' && Math.round(l.amountRemaining || 0) > 0).length;
                 const activeBadge = document.getElementById('active-loans-count');
                 if (activeBadge) {
                     activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
@@ -223,7 +223,10 @@
                     const amountPaid = (loan.amountBorrowed || 0) - (loan.amountRemaining || 0);
                     
                     // Display status directly from database (UNPAID, PARTIALLY PAID, PAID)
-                    const displayStatus = loan.paymentStatus || 'UNPAID';
+                    let displayStatus = loan.paymentStatus || 'UNPAID';
+                    if (Math.round(loan.amountRemaining || 0) <= 0) {
+                        displayStatus = 'PAID';
+                    }
                     const statusClass = displayStatus.toLowerCase().replace(/ /g, '-');
 
                     row.innerHTML = `

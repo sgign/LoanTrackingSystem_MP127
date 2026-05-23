@@ -545,7 +545,7 @@
 
             tr.innerHTML = `
                 <td>
-                    <select class="alloc-payee-select form-select" required style="padding: 0.25rem 0.5rem; font-size: 0.9rem; border-radius: 6px; width: 100%;">
+                    <select class="alloc-payee-select form-select" required style="padding: 0.25rem 1.75rem 0.25rem 0.5rem; font-size: 0.9rem; border-radius: 6px; width: 100%;">
                         ${optionsHtml}
                     </select>
                 </td>
@@ -556,7 +556,7 @@
                     <input type="number" class="alloc-amt" value="${amount}" min="0" step="0.01" placeholder="0.00">
                 </td>
                 <td>
-                    <select class="form-select alloc-status" style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 6px; width: 100%;">
+                    <select class="form-select alloc-status" style="padding: 0.25rem 1.75rem 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 6px; width: 100%;">
                         <option value="UNPAID" ${status === 'UNPAID' ? 'selected' : ''}>UNPAID</option>
                         <option value="PAID" ${status === 'PAID' ? 'selected' : ''}>PAID</option>
                     </select>
@@ -811,7 +811,7 @@
                 const res = await fetch(`${API_BASE}/entries`);
                 if (!res.ok) return;
                 const loans = await res.json();
-                const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID').length;
+                const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID' && Math.round(l.amountRemaining || 0) > 0).length;
                 const activeBadge = document.getElementById('active-loans-count');
                 if (activeBadge) {
                     activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
@@ -905,7 +905,11 @@
             document.getElementById('lenderPersonName').value = loan.lenderPersonName || '';
             document.getElementById('amountBorrowed').value = loan.amountBorrowed || 0;
             document.getElementById('amountRemaining').value = loan.amountRemaining || 0;
-            document.getElementById('paymentStatus').value = loan.paymentStatus || 'UNPAID';
+            let displayStatus = loan.paymentStatus || 'UNPAID';
+            if (Math.round(loan.amountRemaining || 0) <= 0) {
+                displayStatus = 'PAID';
+            }
+            document.getElementById('paymentStatus').value = displayStatus;
             document.getElementById('notes').value = loan.notes || '';
             document.getElementById('paymentNotes').value = loan.paymentNotes || '';
 
@@ -914,8 +918,8 @@
             document.getElementById('info-remaining').textContent = formatCurrency(loan.amountRemaining);
             
             const badge = document.getElementById('info-status-badge');
-            badge.textContent = loan.paymentStatus || 'UNPAID';
-            badge.className = `status-badge ${(loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-')}`;
+            badge.textContent = displayStatus;
+            badge.className = `status-badge ${displayStatus.toLowerCase().replace(' ', '-')}`;
 
             // Receipt preview
             if (loan.receiptProofBase64) {
