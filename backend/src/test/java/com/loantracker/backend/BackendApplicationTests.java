@@ -50,7 +50,7 @@ class BackendApplicationTests {
 
 		// 3. Assertions on the created loan DTO
 		assertNotNull(created.getEntryId());
-		assertEquals("JD-DJP", created.getReferenceId());
+		assertEquals("JD-DJP-1", created.getReferenceId());
 		assertEquals("Jane Doe", created.getBorrowerPersonName());
 		assertEquals("David Jonathan Pasumbal", created.getLenderPersonName());
 		assertEquals(150.0, created.getAmountBorrowed());
@@ -76,7 +76,7 @@ class BackendApplicationTests {
 				.build();
 
 		LoanEntryDto secondCreated = loanEntryService.createLoan(secondDto);
-		assertEquals("JD-DJP", secondCreated.getReferenceId());
+		assertEquals("JD-DJP-2", secondCreated.getReferenceId());
 		assertEquals(borrower.getPersonId(), secondCreated.getBorrowerPersonId());
 
 		// 6. Test borrower group resolution
@@ -90,7 +90,7 @@ class BackendApplicationTests {
 				.build();
 
 		LoanEntryDto groupCreated = loanEntryService.createLoan(groupDto);
-		assertEquals("AT-DJP", groupCreated.getReferenceId());
+		assertEquals("AT-DJP-1", groupCreated.getReferenceId());
 
 		Optional<GroupEntity> groupOpt = groupEntityRepository.findByGroupNameIgnoreCase("Awesome Team");
 		assertTrue(groupOpt.isPresent());

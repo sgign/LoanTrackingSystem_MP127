@@ -17,4 +17,7 @@ public interface LoanEntryRepository extends JpaRepository<LoanEntry, UUID> {
 
     @Query("SELECT l FROM LoanEntry l WHERE l.borrowerGroup.groupId = :groupId")
     List<LoanEntry> findByGroupId(@Param("groupId") UUID groupId);
+
+    @Query("SELECT COUNT(l) FROM LoanEntry l WHERE l.referenceId = :refId OR l.referenceId LIKE :pattern")
+    long countByReferenceIdMatching(@Param("refId") String refId, @Param("pattern") String pattern);
 }

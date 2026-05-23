@@ -283,7 +283,16 @@ public class LoanEntryService {
             lenderInitials = getPersonInitials(entry.getLenderPerson());
         }
 
-        return borrowerInitials + "-" + lenderInitials;
+        String baseRef = borrowerInitials + "-" + lenderInitials;
+
+        // If the entry already has a reference ID that matches the current base, keep it!
+        if (entry.getReferenceId() != null && entry.getReferenceId().startsWith(baseRef)) {
+            return entry.getReferenceId();
+        }
+
+        // Generate a new unique suffix
+        long count = loanEntryRepository.countByReferenceIdMatching(baseRef, baseRef + "-%");
+        return baseRef + "-" + (count + 1);
     }
 
     private String getPersonInitials(Person person) {
