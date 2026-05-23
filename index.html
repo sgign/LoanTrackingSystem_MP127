@@ -205,22 +205,9 @@
 
                     const amountPaid = (loan.amountBorrowed || 0) - (loan.amountRemaining || 0);
                     
-                    // Determine display status (Ongoing, Overdue, Paid)
-                    let displayStatus = 'Ongoing';
-                    if (loan.paymentStatus === 'PAID') {
-                        displayStatus = 'Paid';
-                    } else {
-                        let hasDelinquent = false;
-                        if (loan.installmentPlan && loan.installmentPlan.terms) {
-                            hasDelinquent = loan.installmentPlan.terms.some(t => t.status === 'DELINQUENT');
-                        }
-                        if (hasDelinquent) {
-                            displayStatus = 'Overdue';
-                        } else {
-                            displayStatus = 'Ongoing';
-                        }
-                    }
-                    const statusClass = displayStatus.toLowerCase();
+                    // Display status directly from database (UNPAID, PARTIALLY PAID, PAID)
+                    const displayStatus = loan.paymentStatus || 'UNPAID';
+                    const statusClass = displayStatus.toLowerCase().replace(/ /g, '-');
 
                     row.innerHTML = `
                         <td><strong>${loan.referenceId || 'N/A'}</strong></td>
