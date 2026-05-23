@@ -9,7 +9,7 @@
 
 ## 1. Overview
 
-The Entity Relationship Diagram (ERD) for the Loan Tracking System models all data entities required to support the full CRUD lifecycle of loan entries, payments, installment plans, group expenses, and contact management. The diagram follows the **crow's foot notation** conventions, where entity sets are represented as rectangles, attributes as fields within those rectangles, and relationships as lines with crow's foot symbols denoting cardinality and participation constraints.
+The Entity Relationship Diagram (ERD) for the Loan Tracking System models all data entities required to support the full CRUD lifecycle of loan entries, payments, installment plans, group expenses, and contact management.
 
 The system revolves around a central entity — `LOAN_ENTRY` — from which all other entities either extend or associate. The design strictly enforces the system's core constraint: an installment transaction type cannot simultaneously have a group borrower.
 
