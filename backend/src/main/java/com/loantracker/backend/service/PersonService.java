@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class PersonService {
 
     private final PersonRepository personRepository;
