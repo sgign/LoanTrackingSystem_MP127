@@ -56,7 +56,7 @@
 
     /* Add button — same style as btn-new-entry */
     .btn-pg-add {
-      background: url('Green Gradient.png') no-repeat center;
+      background: url('assets/Green Gradient.png') no-repeat center;
       background-size: cover;
       color: #fff;
       border: 2px solid #fff;
@@ -83,7 +83,7 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      background: url('Green Gradient.png') no-repeat center;
+      background: url('assets/Green Gradient.png') no-repeat center;
       background-size: cover;
       border: 2px solid #fff;
       border-radius: 50px;
@@ -153,7 +153,7 @@
       align-items: center;
       gap: 1rem;
       padding: 1rem 1.4rem;
-      background: url('Green Gradient.png') no-repeat center;
+      background: url('assets/Green Gradient.png') no-repeat center;
       background-size: cover;
     }
 
@@ -298,7 +298,7 @@
     .pg-add-member-row select option { background: #121814; }
 
     .btn-pg-sm {
-      background: url('Green Gradient.png') no-repeat center;
+      background: url('assets/Green Gradient.png') no-repeat center;
       background-size: cover;
       color: #fff;
       border: 1.5px solid rgba(255,255,255,0.3);
@@ -455,12 +455,12 @@
     <div class="pg-toolbar">
       <div class="pg-search-wrap">
         <input type="text" id="pg-search" placeholder="Search…" autocomplete="off" />
-        <img src="search.png" class="pg-search-icon" alt="Search" style="width: 16px; height: 16px; opacity: 0.6; margin-top: 2px;">
+        <img src="assets/search.png" class="pg-search-icon" alt="Search" style="width: 16px; height: 16px; opacity: 0.6; margin-top: 2px;">
       </div>
       <button class="btn-pg-add" id="btn-pg-add" onclick="openAddModal()">+ Add Person</button>
       <div class="pg-tab-toggle" id="pg-tab-toggle" onclick="toggleTabDropdown()">
         <span id="pg-tab-label">People</span>
-        <img src="dropdown.png" alt="dropdown" style="width: 12px; height: 12px; margin-left: 0.5rem; filter: brightness(0) invert(1);">
+        <img src="assets/dropdown.png" alt="dropdown" style="width: 12px; height: 12px; margin-left: 0.5rem; filter: brightness(0) invert(1);">
         <div class="pg-tab-dropdown" id="pg-tab-dropdown">
           <button id="tab-btn-people" class="active" onclick="switchTab('people', event)">People</button>
           <button id="tab-btn-groups" onclick="switchTab('groups', event)">Groups</button>
@@ -642,9 +642,9 @@
             <div class="pg-initials">${initials}</div>
             <div class="pg-card-name">${name}</div>
             <div class="pg-card-actions">
-              <button class="btn-pg-view" onclick="togglePersonBody('${p.personId}')" style="display: flex; align-items: center;"><img src="view.png" style="width: 14px; height: 14px; margin-right: 4px;" alt="View All"> View All</button>
-              <button class="btn-pg-icon btn-pg-edit" onclick="openEditPerson('${p.personId}')" title="Edit"><img src="edit.png" style="width:16px;height:16px;" alt="Edit"></button>
-              <button class="btn-pg-icon btn-pg-delete" onclick="openDeletePerson('${p.personId}','${safeName}')" title="Delete"><img src="delete.png" style="width:16px;height:16px;" alt="Delete"></button>
+              <button class="btn-pg-view" onclick="togglePersonBody('${p.personId}')" style="display: flex; align-items: center;"><img src="assets/view.png" style="width: 14px; height: 14px; margin-right: 4px;" alt="View All"> View All</button>
+              <button class="btn-pg-icon btn-pg-edit" onclick="openEditPerson('${p.personId}')" title="Edit"><img src="assets/edit.png" style="width:16px;height:16px;" alt="Edit"></button>
+              <button class="btn-pg-icon btn-pg-delete" onclick="openDeletePerson('${p.personId}','${safeName}')" title="Delete"><img src="assets/delete.png" style="width:16px;height:16px;" alt="Delete"></button>
             </div>
           </div>
           <div class="pg-card-body" id="body-p-${p.personId}">
@@ -692,9 +692,9 @@
             <div class="pg-card-name">${g.groupName}</div>
             <span class="pg-entry-badge">${memberCount} Member${memberCount !== 1 ? 's' : ''}</span>
             <div class="pg-card-actions">
-              <button class="btn-pg-view" onclick="toggleGroupBody('${g.groupId}')" style="display: flex; align-items: center;"><img src="view.png" style="width: 14px; height: 14px; margin-right: 4px;" alt="View All"> View All</button>
-              <button class="btn-pg-icon btn-pg-edit" onclick="openEditGroup('${g.groupId}')" title="Edit"><img src="edit.png" style="width:16px;height:16px;" alt="Edit"></button>
-              <button class="btn-pg-icon btn-pg-delete" onclick="openDeleteGroup('${g.groupId}','${safeName}')" title="Delete"><img src="delete.png" style="width:16px;height:16px;" alt="Delete"></button>
+              <button class="btn-pg-view" onclick="toggleGroupBody('${g.groupId}')" style="display: flex; align-items: center;"><img src="assets/view.png" style="width: 14px; height: 14px; margin-right: 4px;" alt="View All"> View All</button>
+              <button class="btn-pg-icon btn-pg-edit" onclick="openEditGroup('${g.groupId}')" title="Edit"><img src="assets/edit.png" style="width:16px;height:16px;" alt="Edit"></button>
+              <button class="btn-pg-icon btn-pg-delete" onclick="openDeleteGroup('${g.groupId}','${safeName}')" title="Delete"><img src="assets/delete.png" style="width:16px;height:16px;" alt="Delete"></button>
             </div>
           </div>
           <div class="pg-card-body" id="body-g-${g.groupId}">

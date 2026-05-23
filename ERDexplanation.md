@@ -2,7 +2,7 @@
 ## Entity Relationship Diagram (ERD) Technical Documentation
 
 <div align="center">
-  <img src="ERD_Diagram.png" width="700px" alt="Entity Relationship Diagram">
+  <img src="assets/ERD_Diagram.png" width="700px" alt="Entity Relationship Diagram">
 </div>
 
 ---

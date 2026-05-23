@@ -47,15 +47,15 @@
             <div class="pg-search-wrap" style="flex: 1; min-width: 220px; position: relative;">
                 <input type="text" id="search-query" placeholder="Search by entry name, borrower, lender..." autocomplete="off"
                     style="width: 100%; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 50px; padding: 0.72rem 2.8rem 0.72rem 1.25rem; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box;">
-                <img src="search.png" alt="Search" style="position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; opacity: 0.6; pointer-events: none;">
+                <img src="assets/search.png" alt="Search" style="position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; opacity: 0.6; pointer-events: none;">
             </div>
 
             <!-- Type Filter — green gradient pill -->
             <div class="custom-dropdown" id="dropdown-type" style="position: relative;">
                 <button type="button" class="dropdown-trigger"
-                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: url('Green Gradient.png') no-repeat center/cover; color: #fff; border: 2px solid #fff; border-radius: 50px; height: 44px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: transform 0.2s, filter 0.2s; box-shadow: none;">
+                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: url('assets/Green Gradient.png') no-repeat center/cover; color: #fff; border: 2px solid #fff; border-radius: 50px; height: 44px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: transform 0.2s, filter 0.2s; box-shadow: none;">
                     <span class="selected-value">All Types</span>
-                    <img src="dropdown.png" alt="▾" style="width: 12px; height: 12px; filter: brightness(0) invert(1);">
+                    <img src="assets/dropdown.png" alt="▾" style="width: 12px; height: 12px; filter: brightness(0) invert(1);">
                 </button>
                 <div class="dropdown-menu" style="min-width: 160px;">
                     <button type="button" class="dropdown-item active" data-value="">All Types</button>
@@ -74,9 +74,9 @@
             <!-- Status Filter — green gradient pill -->
             <div class="custom-dropdown" id="dropdown-status" style="position: relative;">
                 <button type="button" class="dropdown-trigger"
-                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: url('Green Gradient.png') no-repeat center/cover; color: #fff; border: 2px solid #fff; border-radius: 50px; height: 44px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: transform 0.2s, filter 0.2s; box-shadow: none;">
+                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: url('assets/Green Gradient.png') no-repeat center/cover; color: #fff; border: 2px solid #fff; border-radius: 50px; height: 44px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: transform 0.2s, filter 0.2s; box-shadow: none;">
                     <span class="selected-value">All Statuses</span>
-                    <img src="dropdown.png" alt="▾" style="width: 12px; height: 12px; filter: brightness(0) invert(1);">
+                    <img src="assets/dropdown.png" alt="▾" style="width: 12px; height: 12px; filter: brightness(0) invert(1);">
                 </button>
                 <div class="dropdown-menu" style="min-width: 160px; right: 0; left: auto;">
                     <button type="button" class="dropdown-item active" data-value="">All Statuses</button>
@@ -258,10 +258,10 @@
                                 View All
                             </button>
                             <button class="btn-pg-icon btn-pg-edit" onclick="goToEdit('${loan.entryId}', event)" title="Edit">
-                                <img src="edit.png" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" alt="Edit">
+                                <img src="assets/edit.png" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" alt="Edit">
                             </button>
                             <button class="btn-pg-icon btn-pg-delete" onclick="deleteLoanEntry('${loan.entryId}', '${safeName}', event)" title="Delete">
-                                <img src="delete.png" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" alt="Delete">
+                                <img src="assets/delete.png" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" alt="Delete">
                             </button>
                         </div>
                     </div>
