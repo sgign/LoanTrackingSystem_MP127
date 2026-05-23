@@ -201,7 +201,7 @@
                                             <th style="width: 35%;">Person Name <span class="required">*</span></th>
                                             <th style="width: 20%;" class="col-pct">Percentage (%)</th>
                                             <th style="width: 25%;" class="col-amt">Allocated Amount (₱)</th>
-                                            <th style="width: 10%;">Status</th>
+                                            <th style="width: 10%;" class="col-status">Status</th>
                                             <th style="width: 10%;">Actions</th>
                                         </tr>
                                     </thead>
@@ -543,6 +543,15 @@
                 optionsHtml += `<option value="${m.personId}" data-name="${name}" ${isSelected ? 'selected' : ''}>${name}</option>`;
             });
 
+            const statusCellHtml = !entryId ? '' : `
+                <td>
+                    <select class="form-select alloc-status" style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 6px; width: 100%;">
+                        <option value="UNPAID" ${status === 'UNPAID' ? 'selected' : ''}>UNPAID</option>
+                        <option value="PAID" ${status === 'PAID' ? 'selected' : ''}>PAID</option>
+                    </select>
+                </td>
+            `;
+
             tr.innerHTML = `
                 <td>
                     <select class="alloc-payee-select form-select" required style="padding: 0.25rem 0.5rem; font-size: 0.9rem; border-radius: 6px; width: 100%;">
@@ -555,12 +564,7 @@
                 <td>
                     <input type="number" class="alloc-amt" value="${amount}" min="0" step="0.01" placeholder="0.00">
                 </td>
-                <td>
-                    <select class="form-select alloc-status" style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border-radius: 6px; width: 100%;">
-                        <option value="UNPAID" ${status === 'UNPAID' ? 'selected' : ''}>UNPAID</option>
-                        <option value="PAID" ${status === 'PAID' ? 'selected' : ''}>PAID</option>
-                    </select>
-                </td>
+                ${statusCellHtml}
                 <td>
                     <button type="button" class="btn-remove-row">Remove</button>
                 </td>
@@ -826,6 +830,18 @@
             // Set default date to today
             document.getElementById('dateBorrowed').value = formatDateForInput(new Date());
 
+            // If new entry, hide status column in allocation table
+            if (!entryId) {
+                const statusHeaders = document.querySelectorAll('.col-status');
+                statusHeaders.forEach(el => el.style.display = 'none');
+                
+                // Adjust Person Name column width
+                const nameHeader = document.querySelector('#allocation-table th:first-child');
+                if (nameHeader) {
+                    nameHeader.style.width = '45%';
+                }
+            }
+
             // Add Event Listeners
             document.getElementById('borrowerTypePerson').addEventListener('change', toggleBorrowerFields);
             document.getElementById('borrowerTypeGroup').addEventListener('change', toggleBorrowerFields);
@@ -1049,7 +1065,7 @@
                         payeePersonName: payeeName.trim(),
                         percentageOfTotal: parseFloat(row.querySelector('.alloc-pct').value) || 0,
                         amount: parseFloat(row.querySelector('.alloc-amt').value) || 0,
-                        status: row.querySelector('.alloc-status').value
+                        status: row.querySelector('.alloc-status') ? row.querySelector('.alloc-status').value : 'UNPAID'
                     });
                 });
 
