@@ -985,5 +985,310 @@ body::after {
     background: rgba(229, 57, 53, 0.25);
 }
 
+/* Card Layout Styling to match People & Groups Page */
+.pg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.pg-card {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.pg-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.4rem;
+  background: url('Green Gradient.png') no-repeat center;
+  background-size: cover;
+}
+
+.pg-initials {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  color: #1a4d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.6);
+}
+
+.pg-card-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+
+.pg-entry-badge {
+  background: rgba(0,0,0,0.35);
+  color: rgba(255,255,255,0.9);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 50px;
+  padding: 0.25rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pg-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.btn-pg-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 50px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-pg-view:hover { background: rgba(0,0,0,0.7); }
+
+.btn-pg-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: transform 0.15s, filter 0.2s;
+}
+
+.btn-pg-icon:hover { transform: scale(1.1); filter: brightness(1.15); }
+.btn-pg-edit { background: rgba(255,255,255,0.25); color: #fff; }
+.btn-pg-delete { background: #e53935; color: #fff; }
+.btn-pg-delete:hover { background: #c62828; }
+
+.pg-card-body {
+  display: none;
+  background: rgba(0,0,0,0.35);
+  border-top: 1.5px solid rgba(255,255,255,0.1);
+  padding: 1.25rem 1.4rem 1.4rem;
+  backdrop-filter: blur(4px);
+}
+
+.pg-card-body.open { display: block; }
+
+/* Custom Loan Card Inner Layout */
+.loan-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .loan-details-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.loan-details-grid .details-col p {
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.loan-details-grid .details-col p strong {
+  color: #a5d6a7;
+  display: inline-block;
+  min-width: 130px;
+}
+
+.card-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1rem;
+}
+
+/* Toolbar Row */
+.pg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.pg-search-wrap {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+
+.pg-search-wrap .filter-input {
+  width: 100%;
+  padding-right: 3rem;
+}
+
+.pg-search-icon {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.15rem;
+  pointer-events: none;
+  color: #4caf50;
+}
+
+.btn-pg-add {
+  background: url('Green Gradient.png') no-repeat center;
+  background-size: cover;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 50px;
+  width: 170px;
+  height: 44px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s, filter 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-pg-add:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.btn-filter-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: 50px;
+  width: 150px;
+  height: 44px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-filter-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-filter-toggle.active {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4caf50;
+  color: #a5d6a7;
+}
+
+/* White Collapsible Body Mockup Details styling */
+.pg-card-body.loan-card-white-body {
+  background: #ffffff;
+  border-top: none;
+  padding: 1.5rem 2.2rem;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  color: #113f15;
+}
+
+.loan-details-grid-mockup {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .loan-details-grid-mockup {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+.loan-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.loan-detail-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #52945a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.loan-detail-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1b4d1b;
+}
+
+/* Custom styling for view all badge in cards header */
+.pg-card-header .btn-pg-view {
+  background: #000000;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.45rem 1.2rem;
+}
+
+.pg-card-header .btn-pg-view:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-pg-icon.btn-pg-edit {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.btn-pg-icon.btn-pg-delete {
+  background: #e53935;
+  border: 1.5px solid #e53935;
+  color: #fff;
+}
+
 
 
