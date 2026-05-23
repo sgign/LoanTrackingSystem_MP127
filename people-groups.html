@@ -438,6 +438,7 @@
         </svg>
       </div>
       <span class="profile-name">David Pasumbal</span>
+      <span class="active-loans-badge" id="active-loans-count">0 Active Loans</span>
     </div>
     <nav class="navbar-pill">
       <a href="index.html">Home</a>
@@ -564,8 +565,23 @@
       });
     });
 
+    async function updateActiveLoansBadge() {
+      try {
+        const res = await fetch(`${API}/entries`);
+        if (!res.ok) return;
+        const loans = await res.json();
+        const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID').length;
+        const activeBadge = document.getElementById('active-loans-count');
+        if (activeBadge) {
+          activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
+        }
+      } catch (err) {
+        console.error("Error updating active loans badge:", err);
+      }
+    }
+
     async function loadAll() {
-      await Promise.all([fetchPersons(), fetchGroups()]);
+      await Promise.all([fetchPersons(), fetchGroups(), updateActiveLoansBadge()]);
       renderCurrent();
     }
 

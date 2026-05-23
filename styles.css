@@ -1381,5 +1381,28 @@ input[type="file"].form-input::file-selector-button:hover {
     border-color: #4caf50 !important;
 }
 
+/* Active Loans Badge in Header */
+.active-loans-badge {
+    background: #ffffff !important;
+    color: #2e6930 !important;
+    border: 2.5px solid #52945a !important;
+    border-radius: 50px !important;
+    padding: 0.35rem 1.1rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    margin-left: 1rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.active-loans-badge strong {
+    font-weight: 800 !important;
+    margin-right: 4px !important;
+    color: #2e6930 !important;
+}
+
 
 
