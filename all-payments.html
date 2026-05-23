@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Tracking System - All Loans</title>
+    <title>Loan Tracking System - All Payments</title>
     <meta name="description" content="View and manage all payment records.">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 
 <body>
@@ -22,27 +22,51 @@
         </div>
         <nav class="navbar-pill">
             <a href="index.html">Home</a>
-            <a href="all-payments.html" class="active">All Loans</a>
+            <a href="all-payments.html" class="active">All Payments</a>
             <a href="people-groups.html">People</a>
         </nav>
     </header>
 
     <main class="main-content">
-        <h1 class="page-title">All Loans</h1>
+        <h1 class="page-title">All Payments</h1>
 
         <!-- Search & Filter Controls -->
         <div class="filter-bar">
             <input type="text" id="search-query" class="filter-input"
                 placeholder="Search by entry name, borrower, lender...">
 
-            <select id="filter-type" class="filter-select">
+            <div class="custom-dropdown" id="dropdown-type">
+                <button type="button" class="dropdown-trigger">
+                    <span class="selected-value">All Types</span>
+                    <img src="dropdown.png" alt="dropdown" style="width: 12px; height: 12px; margin-left: 0.5rem;">
+                </button>
+                <div class="dropdown-menu">
+                    <button type="button" class="dropdown-item active" data-value="">All Types</button>
+                    <button type="button" class="dropdown-item" data-value="Straight Expense">Straight Expense</button>
+                    <button type="button" class="dropdown-item" data-value="Installment Expense">Installment Expense</button>
+                    <button type="button" class="dropdown-item" data-value="Group Expense">Group Expense</button>
+                </div>
+            </div>
+            <select id="filter-type" style="display: none;">
                 <option value="">All Types</option>
                 <option value="Straight Expense">Straight Expense</option>
                 <option value="Installment Expense">Installment Expense</option>
                 <option value="Group Expense">Group Expense</option>
             </select>
 
-            <select id="filter-status" class="filter-select">
+            <div class="custom-dropdown" id="dropdown-status">
+                <button type="button" class="dropdown-trigger">
+                    <span class="selected-value">All Statuses</span>
+                    <img src="dropdown.png" alt="dropdown" style="width: 12px; height: 12px; margin-left: 0.5rem;">
+                </button>
+                <div class="dropdown-menu">
+                    <button type="button" class="dropdown-item active" data-value="">All Statuses</button>
+                    <button type="button" class="dropdown-item" data-value="UNPAID">UNPAID</button>
+                    <button type="button" class="dropdown-item" data-value="PARTIALLY PAID">PARTIALLY PAID</button>
+                    <button type="button" class="dropdown-item" data-value="PAID">PAID</button>
+                </div>
+            </div>
+            <select id="filter-status" style="display: none;">
                 <option value="">All Statuses</option>
                 <option value="UNPAID">UNPAID</option>
                 <option value="PARTIALLY PAID">PARTIALLY PAID</option>
@@ -76,10 +100,7 @@
             </div>
         </section>
 
-        <!-- Actions Footer -->
-        <div class="actions-footer">
-            <a href="entry-detail.html" class="btn-new-entry">+ New Entry</a>
-        </div>
+
     </main>
 
     <script>
@@ -137,8 +158,8 @@
                 row.className = 'transaction-row';
                 row.style.cursor = 'pointer';
                 row.onclick = () => {
-                    window.location.href = `entry-detail.html?id=${loan.entryId}`;
-                };
+                        window.location.href = `payment-records.html?id=${loan.entryId}`;
+                    };
 
                 const statusClass = (loan.paymentStatus || 'unpaid').toLowerCase().replace(' ', '-');
 
@@ -193,8 +214,65 @@
         document.getElementById('filter-type').addEventListener('change', applyFilters);
         document.getElementById('filter-status').addEventListener('change', applyFilters);
 
-        document.addEventListener('DOMContentLoaded', fetchLoans);
+        function setupCustomDropdowns() {
+            const dropdowns = document.querySelectorAll('.custom-dropdown');
+            
+            dropdowns.forEach(dropdown => {
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                const items = dropdown.querySelectorAll('.dropdown-item');
+                const selectId = dropdown.id.replace('dropdown-', 'filter-');
+                const hiddenSelect = document.getElementById(selectId);
+                const selectedValSpan = dropdown.querySelector('.selected-value');
+
+                // Toggle dropdown menu on click
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Close other dropdowns first
+                    dropdowns.forEach(other => {
+                        if (other !== dropdown) other.classList.remove('open');
+                    });
+                    dropdown.classList.toggle('open');
+                });
+
+                // Handle item selection
+                items.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = item.getAttribute('data-value');
+                        const label = item.textContent.trim();
+
+                        // Update text in trigger
+                        selectedValSpan.textContent = label;
+
+                        // Update active state in dropdown list
+                        items.forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+
+                        // Close dropdown
+                        dropdown.classList.remove('open');
+
+                        // Sync with hidden native select and trigger filters
+                        if (hiddenSelect) {
+                            hiddenSelect.value = val;
+                            hiddenSelect.dispatchEvent(new Event('change'));
+                        }
+                    });
+                });
+            });
+
+            // Close all dropdowns if clicking outside
+            document.addEventListener('click', () => {
+                dropdowns.forEach(d => d.classList.remove('open'));
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLoans();
+            setupCustomDropdowns();
+        });
     </script>
+    
 </body>
 
 </html>
