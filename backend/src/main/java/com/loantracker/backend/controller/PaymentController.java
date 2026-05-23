@@ -31,6 +31,8 @@ public class PaymentController {
     private LoanEntryRepository loanEntryRepository;
     @Autowired
     private PaymentAllocationService paymentAllocationService;
+    @Autowired
+    private com.loantracker.backend.service.InstallmentPlanService installmentPlanService;
 
     @GetMapping
     public List<Payment> getAllPayments() {
@@ -69,6 +71,9 @@ public class PaymentController {
                 }
             }
             loanEntryRepository.save(loanEntry);
+            if ("Installment Expense".equalsIgnoreCase(loanEntry.getTransactionType())) {
+                installmentPlanService.recalculateTermStatuses(entryId);
+            }
             paymentAllocationService.recalculateAllocationStatuses(entryId);
             return ResponseEntity.ok(saved);
         } catch (IllegalArgumentException e) {
@@ -108,6 +113,9 @@ public class PaymentController {
             }
             paymentRepository.deleteById(paymentId);
             if (loanEntry != null) {
+                if ("Installment Expense".equalsIgnoreCase(loanEntry.getTransactionType())) {
+                    installmentPlanService.recalculateTermStatuses(loanEntry.getEntryId());
+                }
                 paymentAllocationService.recalculateAllocationStatuses(loanEntry.getEntryId());
             }
             return ResponseEntity.noContent().build();
