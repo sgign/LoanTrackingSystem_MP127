@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class PaymentAllocationService {
 
     private final PaymentAllocationRepository paymentAllocationRepository;

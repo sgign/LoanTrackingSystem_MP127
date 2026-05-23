@@ -11,14 +11,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import com.loantracker.backend.entity.LoanEntry;
 import com.loantracker.backend.entity.Payment;
 import com.loantracker.backend.repository.LoanEntryRepository;
 import com.loantracker.backend.repository.PaymentRepository;
 import com.loantracker.backend.service.PaymentAllocationService;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/payments")
+@CrossOrigin(origins = "http://localhost:3000")
+@RequiredArgsConstructor
+@SuppressWarnings("null")
 public class PaymentController {
     @Autowired
     private PaymentRepository paymentRepository;
