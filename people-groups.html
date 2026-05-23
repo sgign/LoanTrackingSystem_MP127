@@ -516,6 +516,13 @@
         <label>Notes</label>
         <textarea class="form-textarea" id="g-notes" rows="2" placeholder="Optional…"></textarea>
       </div>
+      <div class="form-group" style="margin-top: 1rem;">
+        <label>Select Members</label>
+        <input class="form-input" type="text" id="g-member-search" placeholder="Search people..." style="margin-bottom: 0.75rem;" oninput="filterModalPeople()" />
+        <div id="g-people-list" style="max-height: 180px; overflow-y: auto; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Checkbox list of people -->
+        </div>
+      </div>
       <div class="pg-modal-actions">
         <button class="btn btn-secondary" onclick="closeGroupModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveGroupModal()">Save</button>
@@ -827,10 +834,41 @@
     }
 
     // ── GROUP MODAL ──
+    function renderGroupModalPeople(selectedIds = new Set()) {
+      const container = document.getElementById('g-people-list');
+      if (!allPersons.length) {
+        container.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.9rem;text-align:center;">No people created yet.</div>';
+        return;
+      }
+      container.innerHTML = allPersons.map(p => {
+        const isChecked = selectedIds.has(p.personId);
+        return `
+          <label class="modal-person-item" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; color: rgba(255,255,255,0.85); font-weight: 500; font-size: 0.95rem; padding: 0.25rem 0;">
+            <input type="checkbox" class="modal-person-checkbox" value="${p.personId}" ${isChecked ? 'checked' : ''} style="accent-color: #4caf50; width: 16px; height: 16px; cursor: pointer;" />
+            <span class="person-name-text">${p.firstName} ${p.lastName}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function filterModalPeople() {
+      const q = document.getElementById('g-member-search').value.toLowerCase().trim();
+      const items = document.querySelectorAll('.modal-person-item');
+      items.forEach(item => {
+        const name = item.querySelector('.person-name-text').textContent.toLowerCase();
+        if (name.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
     function openAddGroup() {
       editingId = null;
       document.getElementById('group-modal-title').textContent = 'Add Group';
-      ['g-groupName','g-notes'].forEach(id => document.getElementById(id).value = '');
+      ['g-groupName','g-notes','g-member-search'].forEach(id => document.getElementById(id).value = '');
+      renderGroupModalPeople();
       document.getElementById('group-modal').classList.add('open');
     }
 
@@ -841,6 +879,10 @@
       document.getElementById('group-modal-title').textContent = 'Edit Group';
       document.getElementById('g-groupName').value = g.groupName || '';
       document.getElementById('g-notes').value = g.notes || '';
+      document.getElementById('g-member-search').value = '';
+      
+      const selectedIds = new Set((g.members || []).map(m => m.personId));
+      renderGroupModalPeople(selectedIds);
       document.getElementById('group-modal').classList.add('open');
     }
 
@@ -852,15 +894,57 @@
         notes: document.getElementById('g-notes').value.trim()
       };
       if (!body.groupName) { toast('Group name is required.', true); return; }
+      
+      const checkboxes = document.querySelectorAll('.modal-person-checkbox:checked');
+      const selectedIds = new Set(Array.from(checkboxes).map(cb => cb.value));
+
       try {
         const url = editingId ? `${API}/groups/${editingId}` : `${API}/groups`;
         const res = await fetch(url, { method: editingId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!res.ok) throw new Error();
+        
+        const group = await res.json();
+        const groupId = editingId || group.groupId;
+        
+        if (editingId) {
+          // Fetch current memberships from API to get their membershipIds
+          const memRes = await fetch(`${API}/groups/${editingId}/members`);
+          const currentMemberships = memRes.ok ? await memRes.json() : [];
+          
+          // Additions: selected in UI but not in database
+          const toAdd = Array.from(selectedIds).filter(id => !currentMemberships.some(m => m.personId === id));
+          // Deletions: not selected in UI but present in database
+          const toRemove = currentMemberships.filter(m => !selectedIds.has(m.personId));
+          
+          const addPromises = toAdd.map(personId => fetch(`${API}/memberships`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ groupId, personId })
+          }));
+          
+          const removePromises = toRemove.map(m => fetch(`${API}/memberships/${m.membershipId}`, {
+            method: 'DELETE'
+          }));
+          
+          await Promise.all([...addPromises, ...removePromises]);
+        } else {
+          // For a new group, simply add all selected persons
+          const addPromises = Array.from(selectedIds).map(personId => fetch(`${API}/memberships`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ groupId, personId })
+          }));
+          await Promise.all(addPromises);
+        }
+
         toast(editingId ? 'Group updated!' : 'Group added!');
         closeGroupModal();
         await fetchGroups();
         renderGroups();
-      } catch { toast('Failed to save group.', true); }
+      } catch (err) { 
+        console.error(err);
+        toast('Failed to save group.', true); 
+      }
     }
 
     // ── DELETE ──
