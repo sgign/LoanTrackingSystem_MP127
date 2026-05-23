@@ -64,6 +64,16 @@ public class InstallmentPlanService {
         plan.setNotes(dto.getNotes());
         plan.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
 
+        if ("MONTHLY".equalsIgnoreCase(plan.getPaymentFrequency())) {
+            if (plan.getPaymentDay() != null && (plan.getPaymentDay() < 1 || plan.getPaymentDay() > 28)) {
+                throw new IllegalArgumentException("For MONTHLY frequency, payment day must be between 1 and 28.");
+            }
+        } else if ("WEEKLY".equalsIgnoreCase(plan.getPaymentFrequency())) {
+            if (plan.getPaymentDay() != null && (plan.getPaymentDay() < 1 || plan.getPaymentDay() > 7)) {
+                throw new IllegalArgumentException("For WEEKLY frequency, payment day must be between 1 (Sunday) and 7 (Saturday).");
+            }
+        }
+
         InstallmentPlan savedPlan = installmentPlanRepository.save(plan);
 
         List<InstallmentTerm> terms;
@@ -193,13 +203,22 @@ public class InstallmentPlanService {
                     break;
                 case "WEEKLY":
                     calendar.add(Calendar.WEEK_OF_YEAR, 1);
+                    if (plan.getPaymentDay() != null && plan.getPaymentDay() >= 1 && plan.getPaymentDay() <= 7) {
+                        calendar.set(Calendar.DAY_OF_WEEK, plan.getPaymentDay());
+                    }
                     break;
                 case "BI-WEEKLY":
                     calendar.add(Calendar.WEEK_OF_YEAR, 2);
+                    if (plan.getPaymentDay() != null && plan.getPaymentDay() >= 1 && plan.getPaymentDay() <= 7) {
+                        calendar.set(Calendar.DAY_OF_WEEK, plan.getPaymentDay());
+                    }
                     break;
                 case "MONTHLY":
                 default:
                     calendar.add(Calendar.MONTH, 1);
+                    if (plan.getPaymentDay() != null && plan.getPaymentDay() >= 1 && plan.getPaymentDay() <= 28) {
+                        calendar.set(Calendar.DAY_OF_MONTH, plan.getPaymentDay());
+                    }
                     break;
             }
 
@@ -227,13 +246,22 @@ public class InstallmentPlanService {
                     break;
                 case "WEEKLY":
                     calendar.add(Calendar.WEEK_OF_YEAR, 1);
+                    if (plan.getPaymentDay() != null && plan.getPaymentDay() >= 1 && plan.getPaymentDay() <= 7) {
+                        calendar.set(Calendar.DAY_OF_WEEK, plan.getPaymentDay());
+                    }
                     break;
                 case "BI-WEEKLY":
                     calendar.add(Calendar.WEEK_OF_YEAR, 2);
+                    if (plan.getPaymentDay() != null && plan.getPaymentDay() >= 1 && plan.getPaymentDay() <= 7) {
+                        calendar.set(Calendar.DAY_OF_WEEK, plan.getPaymentDay());
+                    }
                     break;
                 case "MONTHLY":
                 default:
                     calendar.add(Calendar.MONTH, 1);
+                    if (plan.getPaymentDay() != null && plan.getPaymentDay() >= 1 && plan.getPaymentDay() <= 28) {
+                        calendar.set(Calendar.DAY_OF_MONTH, plan.getPaymentDay());
+                    }
                     break;
             }
             term.setDueDate(calendar.getTime());
