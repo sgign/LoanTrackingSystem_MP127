@@ -188,11 +188,17 @@
 
     async function deleteEntry() {
         if (!entryId) return;
-        if (!confirm('Are you sure you want to delete this loan entry and ALL its payment records? This cannot be undone.')) return;
+        document.getElementById('pr-delete-modal').classList.add('open');
+    }
+
+    function closePrDeleteModal() {
+        document.getElementById('pr-delete-modal').classList.remove('open');
+    }
+
+    async function confirmPrDelete() {
+        closePrDeleteModal();
         try {
-            // First delete all payments for this entry
             await fetch(`${API_BASE}/payments/by-entry/${entryId}`, { method: 'DELETE' });
-            // Then delete the loan entry itself
             const res = await fetch(`${API_BASE}/entries/${entryId}`, { method: 'DELETE' });
             if (res.ok || res.status === 204) {
                 window.location.href = 'all-payments.html';
@@ -414,5 +420,32 @@ async function loadDashboard() {
 
     document.addEventListener('DOMContentLoaded', loadDashboard);
 </script>
+
+<!-- ── DELETE CONFIRM MODAL ── -->
+<div class="pg-modal-overlay" id="pr-delete-modal" onclick="if(event.target===this)closePrDeleteModal()">
+    <div class="pg-modal">
+        <h2>Confirm Delete</h2>
+        <p style="color:rgba(255,255,255,0.7);margin-bottom:0.5rem;">Are you sure you want to delete this loan entry?</p>
+        <p style="color:#ef9a9a;font-size:0.85rem;">All payment records will also be permanently deleted. This action cannot be undone.</p>
+        <div class="pg-modal-actions">
+            <button class="pr-btn-cancel" onclick="closePrDeleteModal()">Cancel</button>
+            <button class="pr-btn-delete" onclick="confirmPrDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pg-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center;}
+    .pg-modal-overlay.open{display:flex;}
+    .pg-modal{background:#0e130f;border:1.5px solid rgba(255,255,255,0.12);border-radius:20px;padding:2.25rem;width:100%;max-width:440px;box-shadow:0 16px 60px rgba(0,0,0,0.6);animation:prIn 0.2s ease-out;}
+    @keyframes prIn{from{opacity:0;transform:translateY(-20px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+    .pg-modal h2{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:1.25rem;letter-spacing:-0.3px;}
+    .pg-modal-actions{display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.08);}
+    .pr-btn-delete{background:#e53935;color:#fff;border:none;border-radius:50px;padding:0.6rem 1.5rem;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.2s;}
+    .pr-btn-delete:hover{background:#c62828;}
+    .pr-btn-cancel{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:0.6rem 1.5rem;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.2s;}
+    .pr-btn-cancel:hover{background:rgba(255,255,255,0.14);}
+</style>
+
 </body>
 </html>

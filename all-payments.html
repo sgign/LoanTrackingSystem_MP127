@@ -7,6 +7,16 @@
     <title>Loan Tracking System - All Payments</title>
     <meta name="description" content="View and manage all payment records.">
     <link rel="stylesheet" href="styles.css?v=5">
+    <style>
+        #search-query:focus {
+            border-color: #4caf50 !important;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.25) !important;
+        }
+        #search-query::placeholder { color: rgba(255,255,255,0.4); }
+        .pg-toolbar .dropdown-trigger:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .pg-toolbar .custom-dropdown { position: relative; }
+        .pg-toolbar .dropdown-menu { position: absolute; top: calc(100% + 8px); right: 0; left: auto; z-index: 200; }
+    </style>
 </head>
 
 <body>
@@ -32,19 +42,22 @@
         <h1 class="page-title">All Payments Records</h1>
 
         <!-- Search & Filter Controls -->
-        <div class="pg-toolbar" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem;">
-            <div class="pg-search-wrap" style="flex: 1; position: relative;">
-                <img src="search.png" alt="Search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; filter: brightness(0) invert(0.6);">
-                <input type="text" id="search-query" class="filter-input"
-                    placeholder="Search by entry name, borrower, lender..." style="width: 100%; border: 1px solid #333; background: #1a1a1a; padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 8px; color: #fff; font-family: inherit;">
+        <div class="pg-toolbar" style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 2rem; flex-wrap: wrap;">
+            <!-- Search Input — pill style matching People page -->
+            <div class="pg-search-wrap" style="flex: 1; min-width: 220px; position: relative;">
+                <input type="text" id="search-query" placeholder="Search by entry name, borrower, lender..." autocomplete="off"
+                    style="width: 100%; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 50px; padding: 0.72rem 2.8rem 0.72rem 1.25rem; color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box;">
+                <img src="search.png" alt="Search" style="position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; opacity: 0.6; pointer-events: none;">
             </div>
 
-            <div class="custom-dropdown" id="dropdown-type" style="width: 160px !important;">
-                <button type="button" class="dropdown-trigger" style="background: #1a1a1a !important; border: 1px solid #333 !important; border-radius: 8px !important; color: #fff !important; padding: 0 1rem; font-weight: normal !important; justify-content: space-between; width: 100%; height: 44px !important; display: flex; align-items: center; box-shadow: none !important;">
+            <!-- Type Filter — green gradient pill -->
+            <div class="custom-dropdown" id="dropdown-type" style="position: relative;">
+                <button type="button" class="dropdown-trigger"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: url('Green Gradient.png') no-repeat center/cover; color: #fff; border: 2px solid #fff; border-radius: 50px; height: 44px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: transform 0.2s, filter 0.2s; box-shadow: none;">
                     <span class="selected-value">All Types</span>
-                    <img src="dropdown.png" alt="dropdown" style="width: 12px; height: 12px; margin-left: 0.5rem; filter: brightness(0) invert(0.6);">
+                    <img src="dropdown.png" alt="▾" style="width: 12px; height: 12px; filter: brightness(0) invert(1);">
                 </button>
-                <div class="dropdown-menu">
+                <div class="dropdown-menu" style="min-width: 160px;">
                     <button type="button" class="dropdown-item active" data-value="">All Types</button>
                     <button type="button" class="dropdown-item" data-value="Straight Expense">Straight Expense</button>
                     <button type="button" class="dropdown-item" data-value="Installment Expense">Installment Expense</button>
@@ -58,12 +71,14 @@
                 <option value="Group Expense">Group Expense</option>
             </select>
 
-            <div class="custom-dropdown" id="dropdown-status" style="width: 160px !important;">
-                <button type="button" class="dropdown-trigger" style="background: #1a1a1a !important; border: 1px solid #333 !important; border-radius: 8px !important; color: #fff !important; padding: 0 1rem; font-weight: normal !important; justify-content: space-between; width: 100%; height: 44px !important; display: flex; align-items: center; box-shadow: none !important;">
+            <!-- Status Filter — green gradient pill -->
+            <div class="custom-dropdown" id="dropdown-status" style="position: relative;">
+                <button type="button" class="dropdown-trigger"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: url('Green Gradient.png') no-repeat center/cover; color: #fff; border: 2px solid #fff; border-radius: 50px; height: 44px; padding: 0 1.25rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: transform 0.2s, filter 0.2s; box-shadow: none;">
                     <span class="selected-value">All Statuses</span>
-                    <img src="dropdown.png" alt="dropdown" style="width: 12px; height: 12px; margin-left: 0.5rem; filter: brightness(0) invert(0.6);">
+                    <img src="dropdown.png" alt="▾" style="width: 12px; height: 12px; filter: brightness(0) invert(1);">
                 </button>
-                <div class="dropdown-menu">
+                <div class="dropdown-menu" style="min-width: 160px; right: 0; left: auto;">
                     <button type="button" class="dropdown-item active" data-value="">All Statuses</button>
                     <button type="button" class="dropdown-item" data-value="UNPAID">UNPAID</button>
                     <button type="button" class="dropdown-item" data-value="PARTIALLY PAID">PARTIALLY PAID</button>
@@ -164,15 +179,27 @@
             window.location.href = `entry-detail.html?id=${id}`;
         }
 
-        async function deleteLoanEntry(id, name, event) {
+        // ── DELETE MODAL ──
+        let _deleteId = null;
+
+        function deleteLoanEntry(id, name, event) {
             if (event) event.stopPropagation();
-            if (!confirm(`Are you sure you want to delete "${name}" and all its payment records? This action cannot be undone.`)) {
-                return;
-            }
+            _deleteId = id;
+            document.getElementById('ap-delete-name').textContent = `"${name}"`;
+            document.getElementById('ap-delete-modal').classList.add('open');
+        }
+
+        function closeApDeleteModal() {
+            _deleteId = null;
+            document.getElementById('ap-delete-modal').classList.remove('open');
+        }
+
+        async function confirmApDelete() {
+            if (!_deleteId) return;
+            const id = _deleteId;
+            closeApDeleteModal();
             try {
-                // First delete linked payments to avoid FK constraint error
                 await fetch(`${API_BASE}/payments/by-entry/${id}`, { method: 'DELETE' });
-                // Then delete the loan entry itself
                 const res = await fetch(`${API_BASE}/entries/${id}`, { method: 'DELETE' });
                 if (res.ok || res.status === 204) {
                     fetchLoans();
@@ -364,7 +391,33 @@
             setupCustomDropdowns();
         });
     </script>
-    
+
+    <!-- ── DELETE CONFIRM MODAL ── -->
+    <div class="pg-modal-overlay" id="ap-delete-modal" onclick="if(event.target===this)closeApDeleteModal()">
+        <div class="pg-modal">
+            <h2>Confirm Delete</h2>
+            <p style="color:rgba(255,255,255,0.7);margin-bottom:0.5rem;">Are you sure you want to delete <strong id="ap-delete-name" style="color:#fff;"></strong>?</p>
+            <p style="color:#ef9a9a;font-size:0.85rem;">All payment records for this entry will also be deleted. This action cannot be undone.</p>
+            <div class="pg-modal-actions">
+                <button class="ap-btn-cancel" onclick="closeApDeleteModal()">Cancel</button>
+                <button class="ap-btn-delete" onclick="confirmApDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .pg-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center;}
+        .pg-modal-overlay.open{display:flex;}
+        .pg-modal{background:#0e130f;border:1.5px solid rgba(255,255,255,0.12);border-radius:20px;padding:2.25rem;width:100%;max-width:440px;box-shadow:0 16px 60px rgba(0,0,0,0.6);animation:apIn 0.2s ease-out;}
+        @keyframes apIn{from{opacity:0;transform:translateY(-20px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+        .pg-modal h2{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:1.25rem;letter-spacing:-0.3px;}
+        .pg-modal-actions{display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.08);}
+        .ap-btn-delete{background:#e53935;color:#fff;border:none;border-radius:50px;padding:0.6rem 1.5rem;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.2s;}
+        .ap-btn-delete:hover{background:#c62828;}
+        .ap-btn-cancel{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:0.6rem 1.5rem;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.2s;}
+        .ap-btn-cancel:hover{background:rgba(255,255,255,0.14);}
+    </style>
+
 </body>
 
 </html>
