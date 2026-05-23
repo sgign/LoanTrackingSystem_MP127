@@ -61,7 +61,7 @@ A personal finance web application for tracking loans, debts, installment paymen
 
 | Layer | Technology |
 |---|---|
-| Frontend | TypeScript / JavaScript (React or Angular) |
+| Frontend | HTML, CSS, JavaScript |
 | Backend | Java, Spring Boot, Spring Data JPA |
 | Database | PostgreSQL |
 
