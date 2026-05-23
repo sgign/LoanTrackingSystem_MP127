@@ -244,6 +244,9 @@
         } else if (method === "Bank Transfer") {
             color = "#7e57c2"; 
             bg = "rgba(126, 87, 194, 0.2)";
+        } else if (method === "SKIPPED") {
+            color = "#ff5252";
+            bg = "rgba(244, 67, 54, 0.15)";
         }
         return `<span style="color: ${color}; background: ${bg}; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; border: 1px solid ${color}44;">${method}</span>`;
     }
@@ -251,10 +254,11 @@
 async function loadDashboard() {
     if (!entryId) return;
 
+    let loan = null;
     // Part 1: Load Loan Details (Header)
     try {
         const loanRes = await fetch(`${API_BASE}/entries/${entryId}`);
-        const loan = await loanRes.json();
+        loan = await loanRes.json();
 
         // Use a fallback for the borrower name
         document.getElementById('disp-borrower').innerText = loan.borrowerPersonName || loan.borrowerGroupName || loan.entryName || "Loan Detail";
@@ -306,27 +310,53 @@ async function loadDashboard() {
         const payRes = await fetch(`${API_BASE}/payments`);
         const payments = await payRes.json();
         
-        const filtered = Array.isArray(payments) 
+        let filtered = Array.isArray(payments) 
             ? payments.filter(p => p.loanEntry && p.loanEntry.entryId === entryId)
             : [];
-        
+            
+        // Map payments to generic history items
+        let historyItems = filtered.map(p => ({
+            date: new Date(p.paymentDate),
+            amount: p.paymentAmount,
+            method: p.notes?.split('|')[0] || 'Cash',
+            note: p.notes?.split('|')[1] || '—',
+            isSkipped: false
+        }));
+
+        // If installment loan, add skipped terms to history items
+        if (loan && loan.transactionType === "Installment Expense" && loan.installmentPlan && loan.installmentPlan.terms) {
+            loan.installmentPlan.terms.forEach(t => {
+                if (t.status === "SKIPPED") {
+                    historyItems.push({
+                        date: new Date(t.dueDate),
+                        amount: loan.installmentPlan.amountPerTerm || 0,
+                        method: 'SKIPPED',
+                        note: `Term ${t.termNumber} Skipped`,
+                        isSkipped: true
+                    });
+                }
+            });
+        }
+
+        // Sort history items chronologically (oldest to latest)
+        historyItems.sort((a, b) => a.date - b.date);
+
         const tbody = document.getElementById('pay-history-body');
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:gray;">No payments recorded yet.</td></tr>';
+        if (historyItems.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:gray;">No payments or skipped terms recorded yet.</td></tr>';
         } else {
-            tbody.innerHTML = filtered.map((p, index) => `
+            tbody.innerHTML = historyItems.map((item, index) => `
                 <tr style="border-bottom: 2px solid rgba(255,255,255,0.08); background: ${index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};">
                     <td style="color: rgba(255,255,255,0.4); padding: 1.3rem 0.75rem; font-size: 0.85rem;">#${index + 1}</td>
-                    <td style="padding: 1.3rem 0.75rem;">${new Date(p.paymentDate).toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'})}</td>
-                    <td style="font-weight: 700; color: #ffca28; font-size: 1.05rem; padding: 1.3rem 0.75rem;">${formatCurrency(p.paymentAmount)}</td>
-                    <td style="padding: 1.3rem 0.75rem;">${getMethodBadge(p.notes?.split('|')[0] || 'Cash')}</td>
-                    <td style="color: rgba(255,255,255,0.5); font-style: italic; padding: 1.3rem 0.75rem;">${p.notes?.split('|')[1] || '—'}</td>
+                    <td style="padding: 1.3rem 0.75rem;">${item.date.toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'})}</td>
+                    <td style="font-weight: 700; color: ${item.isSkipped ? 'rgba(255,255,255,0.35)' : '#ffca28'}; font-size: 1.05rem; padding: 1.3rem 0.75rem; ${item.isSkipped ? 'text-decoration: line-through;' : ''}">${formatCurrency(item.amount)}</td>
+                    <td style="padding: 1.3rem 0.75rem;">${getMethodBadge(item.method)}</td>
+                    <td style="color: rgba(255,255,255,0.5); font-style: italic; padding: 1.3rem 0.75rem;">${item.note}</td>
                 </tr>
             `).join('');
         }
     } catch (err) {
         console.error("Payment history failed:", err);
-        // We don't change the main header here so the loan data stays visible
     }
 }
     async function submitNewPayment() {
