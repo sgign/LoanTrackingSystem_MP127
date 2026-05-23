@@ -15,6 +15,7 @@ import com.loantracker.backend.entity.LoanEntry;
 import com.loantracker.backend.entity.Payment;
 import com.loantracker.backend.repository.LoanEntryRepository;
 import com.loantracker.backend.repository.PaymentRepository;
+import com.loantracker.backend.service.PaymentAllocationService;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -23,6 +24,8 @@ public class PaymentController {
     private PaymentRepository paymentRepository;
     @Autowired
     private LoanEntryRepository loanEntryRepository;
+    @Autowired
+    private PaymentAllocationService paymentAllocationService;
 
     @GetMapping
     public List<Payment> getAllPayments() {
@@ -58,6 +61,7 @@ public class PaymentController {
                 loanEntry.setDateFullyPaid(null);
             }
             loanEntryRepository.save(loanEntry);
+            paymentAllocationService.recalculateAllocationStatuses(entryId);
             return ResponseEntity.ok(saved);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -92,6 +96,9 @@ public class PaymentController {
                 loanEntryRepository.save(loanEntry);
             }
             paymentRepository.deleteById(paymentId);
+            if (loanEntry != null) {
+                paymentAllocationService.recalculateAllocationStatuses(loanEntry.getEntryId());
+            }
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
