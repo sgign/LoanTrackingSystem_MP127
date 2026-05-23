@@ -19,6 +19,7 @@
                 </svg>
             </div>
             <span class="profile-name">David Pasumbal</span>
+            <span class="active-loans-badge" id="active-loans-count">0 Active Loans</span>
         </div>
         <nav class="navbar-pill">
             <a href="index.html">Home</a>
@@ -117,6 +118,14 @@
                 const response = await fetch(`${API_BASE}/entries`);
                 if (!response.ok) throw new Error('Failed to fetch entries');
                 allLoans = await response.json();
+                
+                // Update active loans badge
+                const activeLoansCount = allLoans.filter(l => l.paymentStatus !== 'PAID').length;
+                const activeBadge = document.getElementById('active-loans-count');
+                if (activeBadge) {
+                    activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
+                }
+
                 renderLoans(allLoans);
             } catch (err) {
                 console.error(err);
