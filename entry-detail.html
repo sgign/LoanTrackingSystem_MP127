@@ -200,7 +200,7 @@
                                         <tr>
                                             <th style="width: 35%;">Person Name <span class="required">*</span></th>
                                             <th style="width: 20%;" class="col-pct">Percentage (%)</th>
-                                            <th style="width: 25%;" class="col-amt">Allocated Amount ($)</th>
+                                            <th style="width: 25%;" class="col-amt">Allocated Amount (₱)</th>
                                             <th style="width: 10%;">Status</th>
                                             <th style="width: 10%;">Actions</th>
                                         </tr>
@@ -214,7 +214,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 1rem;">
                                 <button type="button" id="btn-add-member" class="btn btn-secondary" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;">+ Add Group Member</button>
                                 <div style="font-size: 1rem; font-weight: 600; text-align: right;">
-                                    <div>Total Allocated: <span id="allocated-total-display">$0.00</span> / <span id="loan-total-display">$0.00</span></div>
+                                    <div>Total Allocated: <span id="allocated-total-display">₱0.00</span> / <span id="loan-total-display">₱0.00</span></div>
                                     <div id="split-validation-msg" style="font-size: 0.85rem; color: #ff8a80; font-weight: normal; margin-top: 0.25rem;"></div>
                                 </div>
                             </div>
@@ -633,10 +633,10 @@
             const rows = document.querySelectorAll('.allocation-row');
             const count = rows.length;
 
-            document.getElementById('loan-total-display').textContent = `$${amountBorrowed.toFixed(2)}`;
+            document.getElementById('loan-total-display').textContent = `₱${amountBorrowed.toFixed(2)}`;
 
             if (count === 0) {
-                document.getElementById('allocated-total-display').textContent = '$0.00';
+                document.getElementById('allocated-total-display').textContent = '₱0.00';
                 document.getElementById('split-validation-msg').textContent = 'Add at least one member.';
                 return;
             }
@@ -690,11 +690,11 @@
 
                 if (Math.abs(totalAllocated - amountBorrowed) > 0.05) {
                     isValid = false;
-                    errorMsg = `Amounts sum to $${totalAllocated.toFixed(2)}. Must equal $${amountBorrowed.toFixed(2)}.`;
+                    errorMsg = `Amounts sum to ₱${totalAllocated.toFixed(2)}. Must equal ₱${amountBorrowed.toFixed(2)}.`;
                 }
             }
 
-            document.getElementById('allocated-total-display').textContent = `$${totalAllocated.toFixed(2)}`;
+            document.getElementById('allocated-total-display').textContent = `₱${totalAllocated.toFixed(2)}`;
             
             const msgEl = document.getElementById('split-validation-msg');
             if (!isValid) {
@@ -1027,7 +1027,7 @@
                 } else if (splitType === 'AMOUNT') {
                     rows.forEach(r => total += (parseFloat(r.querySelector('.alloc-amt').value) || 0));
                     if (Math.abs(total - amountBorrowed) > 0.05) {
-                        alert(`Sum of allocated amounts must equal total loan amount ($${amountBorrowed.toFixed(2)}). Current sum: $${total.toFixed(2)}`);
+                        alert(`Sum of allocated amounts must equal total loan amount (₱${amountBorrowed.toFixed(2)}). Current sum: ₱${total.toFixed(2)}`);
                         return;
                     }
                 }
