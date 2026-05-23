@@ -198,10 +198,41 @@ public class InstallmentPlanService {
         boolean allPaid = terms.stream()
                 .filter(t -> t.getStatus() != InstallmentTermStatus.SKIPPED)
                 .allMatch(t -> t.getStatus() == InstallmentTermStatus.PAID);
+        
+        boolean allNotStarted = terms.stream()
+                .filter(t -> t.getStatus() != InstallmentTermStatus.SKIPPED)
+                .allMatch(t -> t.getStatus() == InstallmentTermStatus.NOT_STARTED);
+
+        boolean hasDelinquent = terms.stream()
+                .filter(t -> t.getStatus() != InstallmentTermStatus.SKIPPED)
+                .anyMatch(t -> t.getStatus() == InstallmentTermStatus.DELINQUENT);
+
+        LoanEntry entry = plan.getLoanEntry();
+        
         if (allPaid && !terms.isEmpty()) {
             plan.setStatus("SETTLED");
+            if (entry != null) {
+                entry.setPaymentStatus("PAID");
+            }
+        } else if (allNotStarted && !terms.isEmpty()) {
+            plan.setStatus("ACTIVE");
+            if (entry != null) {
+                entry.setPaymentStatus("NOT STARTED");
+            }
+        } else if (hasDelinquent && !terms.isEmpty()) {
+            plan.setStatus("ACTIVE");
+            if (entry != null) {
+                entry.setPaymentStatus("DELINQUENT");
+            }
         } else {
             plan.setStatus("ACTIVE");
+            if (entry != null && ("NOT STARTED".equals(entry.getPaymentStatus()) || "DELINQUENT".equals(entry.getPaymentStatus()))) {
+                entry.setPaymentStatus("UNPAID");
+            }
+        }
+        
+        if (entry != null) {
+            loanEntryRepository.save(entry);
         }
         installmentPlanRepository.save(plan);
     }

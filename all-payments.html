@@ -80,16 +80,20 @@
                 </button>
                 <div class="dropdown-menu" style="min-width: 160px; right: 0; left: auto;">
                     <button type="button" class="dropdown-item active" data-value="">All Statuses</button>
+                    <button type="button" class="dropdown-item" data-value="NOT STARTED">NOT STARTED</button>
                     <button type="button" class="dropdown-item" data-value="UNPAID">UNPAID</button>
                     <button type="button" class="dropdown-item" data-value="PARTIALLY PAID">PARTIALLY PAID</button>
                     <button type="button" class="dropdown-item" data-value="PAID">PAID</button>
+                    <button type="button" class="dropdown-item" data-value="DELINQUENT">DELINQUENT</button>
                 </div>
             </div>
             <select id="filter-status" style="display: none;">
                 <option value="">All Statuses</option>
+                <option value="NOT STARTED">NOT STARTED</option>
                 <option value="UNPAID">UNPAID</option>
                 <option value="PARTIALLY PAID">PARTIALLY PAID</option>
                 <option value="PAID">PAID</option>
+                <option value="DELINQUENT">DELINQUENT</option>
             </select>
         </div>
 
