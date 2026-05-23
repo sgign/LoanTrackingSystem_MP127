@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loan Tracking System - Entry Detail</title>
     <meta name="description" content="Detailed information about a specific loan entry.">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
     <header class="header">
@@ -19,7 +19,7 @@
         </div>
         <nav class="navbar-pill">
             <a href="index.html">Home</a>
-            <a href="all-payments.html">All Loans</a>
+            <a href="all-payments.html">All Payments</a>
             <a href="people-groups.html">People</a>
         </nav>
     </header>
@@ -99,7 +99,9 @@
 
                     <div class="form-group hidden" id="borrower-group-group">
                         <label for="borrowerGroupName">Borrower Group <span class="required">*</span></label>
-                        <input type="text" id="borrowerGroupName" class="form-input" placeholder="e.g. Work Friends">
+                        <select id="borrowerGroupName" class="form-select">
+                            <option value="" disabled selected>Select Group</option>
+                        </select>
                     </div>
 
                     <!-- Lender Input -->
@@ -250,6 +252,7 @@
 
         let receiptBase64 = null;
         let allGroups = [];
+        let currentGroupMembers = [];
         let allocationRowCounter = 0;
 
         function formatDateForInput(dateStr) {
@@ -438,10 +441,20 @@
             const status = data.status || 'UNPAID';
             const payeeId = data.payeePersonId || '';
             
+            let optionsHtml = '<option value="">Select Member</option>';
+            currentGroupMembers.forEach(m => {
+                const firstName = m.personFirstName || m.firstName || '';
+                const lastName = m.personLastName || m.lastName || '';
+                const name = `${firstName} ${lastName}`.trim();
+                const isSelected = (payeeId && m.personId === payeeId) || (!payeeId && payeeName && name.toLowerCase() === payeeName.toLowerCase());
+                optionsHtml += `<option value="${m.personId}" data-name="${name}" ${isSelected ? 'selected' : ''}>${name}</option>`;
+            });
+
             tr.innerHTML = `
                 <td>
-                    <input type="text" class="alloc-payee-name" value="${payeeName}" required placeholder="Name of group member">
-                    <input type="hidden" class="alloc-payee-id" value="${payeeId}">
+                    <select class="alloc-payee-select form-select" required style="padding: 0.25rem 0.5rem; font-size: 0.9rem; border-radius: 6px; width: 100%;">
+                        ${optionsHtml}
+                    </select>
                 </td>
                 <td>
                     <input type="number" class="alloc-pct" value="${percentage}" min="0" max="100" step="0.01" placeholder="0.00">
@@ -473,9 +486,6 @@
             tr.querySelector('.alloc-amt').addEventListener('input', () => {
                 calculateSplits({ trigger: 'amt', rowId });
             });
-            tr.querySelector('.alloc-payee-name').addEventListener('change', (e) => {
-                tr.querySelector('.alloc-payee-id').value = '';
-            });
 
             tbody.appendChild(tr);
             updateAllocationHeaders();
@@ -499,6 +509,28 @@
                 pctInputs.forEach(i => i.setAttribute('readonly', ''));
                 amtInputs.forEach(i => i.removeAttribute('readonly'));
             }
+        }
+
+        // Dynamically update payee select options for all split rows
+        function updateAllAllocationDropdowns() {
+            const selects = document.querySelectorAll('.alloc-payee-select');
+            selects.forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">Select Member</option>';
+                currentGroupMembers.forEach(m => {
+                    const firstName = m.personFirstName || m.firstName || '';
+                    const lastName = m.personLastName || m.lastName || '';
+                    const name = `${firstName} ${lastName}`.trim();
+                    const opt = document.createElement('option');
+                    opt.value = m.personId;
+                    opt.setAttribute('data-name', name);
+                    opt.textContent = name;
+                    if (m.personId === currentVal) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            });
         }
 
         // Dynamically compute values in table based on split type selection
@@ -587,9 +619,23 @@
                 const res = await fetch(`${API_BASE}/groups`);
                 if (res.ok) {
                     allGroups = await res.json();
+                    populateGroupDropdown();
                 }
             } catch (err) {
                 console.error("Error fetching groups:", err);
+            }
+        }
+
+        function populateGroupDropdown() {
+            const dropdown = document.getElementById('borrowerGroupName');
+            if (dropdown && dropdown.tagName === 'SELECT') {
+                dropdown.innerHTML = '<option value="" disabled selected>Select Group</option>';
+                allGroups.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g.groupName;
+                    opt.textContent = g.groupName;
+                    dropdown.appendChild(opt);
+                });
             }
         }
 
@@ -600,21 +646,33 @@
 
             const groupNameInput = document.getElementById('borrowerGroupName');
             const groupName = groupNameInput.value.trim().toLowerCase();
-            if (!groupName) return;
+            if (!groupName) {
+                currentGroupMembers = [];
+                updateAllAllocationDropdowns();
+                return;
+            }
 
             const matchedGroup = allGroups.find(g => g.groupName.trim().toLowerCase() === groupName);
-            if (!matchedGroup) return;
+            if (!matchedGroup) {
+                currentGroupMembers = [];
+                updateAllAllocationDropdowns();
+                return;
+            }
 
             try {
                 const res = await fetch(`${API_BASE}/groups/${matchedGroup.groupId}/members`);
                 if (!res.ok) return;
                 const members = await res.json();
+                currentGroupMembers = members || [];
+
                 if (members && members.length > 0) {
                     const tbody = document.getElementById('allocation-tbody');
                     if (tbody.children.length > 0) {
-                        const firstInputVal = tbody.querySelector('.alloc-payee-name').value.trim();
+                        const firstSelect = tbody.querySelector('.alloc-payee-select');
+                        const firstInputVal = firstSelect ? firstSelect.value.trim() : '';
                         if (firstInputVal !== '') {
                             if (!confirm(`Auto-populate split allocations with members of "${matchedGroup.groupName}"?`)) {
+                                updateAllAllocationDropdowns();
                                 return;
                             }
                         }
@@ -622,12 +680,16 @@
 
                     tbody.innerHTML = '';
                     members.forEach(member => {
+                        const firstName = member.personFirstName || member.firstName || '';
+                        const lastName = member.personLastName || member.lastName || '';
                         addAllocationRow({
                             payeePersonId: member.personId,
-                            payeePersonName: `${member.firstName} ${member.lastName}`.trim(),
+                            payeePersonName: `${firstName} ${lastName}`.trim(),
                             status: 'UNPAID'
                         });
                     });
+                } else {
+                    updateAllAllocationDropdowns();
                 }
             } catch (err) {
                 console.error("Error fetching group members:", err);
@@ -712,6 +774,19 @@
                 document.getElementById('borrowerTypeGroup').checked = true;
                 toggleBorrowerFields();
                 document.getElementById('borrowerGroupName').value = loan.borrowerGroupName;
+
+                // Load group members for edit mode before loading allocations
+                const matchedGroup = allGroups.find(g => g.groupName.trim().toLowerCase() === loan.borrowerGroupName.trim().toLowerCase());
+                if (matchedGroup) {
+                    try {
+                        const mRes = await fetch(`${API_BASE}/groups/${matchedGroup.groupId}/members`);
+                        if (mRes.ok) {
+                            currentGroupMembers = await mRes.json();
+                        }
+                    } catch (e) {
+                        console.error("Error loading group members for edit:", e);
+                    }
+                }
             } else {
                 document.getElementById('borrowerTypePerson').checked = true;
                 toggleBorrowerFields();
@@ -843,15 +918,30 @@
                 }
 
                 const allocations = [];
+                let hasUnselected = false;
                 rows.forEach(row => {
+                    const selectEl = row.querySelector('.alloc-payee-select');
+                    const payeeId = selectEl.value;
+                    const selectedOpt = selectEl.options[selectEl.selectedIndex];
+                    const payeeName = selectedOpt ? selectedOpt.getAttribute('data-name') || '' : '';
+
+                    if (!payeeId) {
+                        hasUnselected = true;
+                    }
+
                     allocations.push({
-                        payeePersonId: row.querySelector('.alloc-payee-id').value || null,
-                        payeePersonName: row.querySelector('.alloc-payee-name').value.trim(),
+                        payeePersonId: payeeId || null,
+                        payeePersonName: payeeName.trim(),
                         percentageOfTotal: parseFloat(row.querySelector('.alloc-pct').value) || 0,
                         amount: parseFloat(row.querySelector('.alloc-amt').value) || 0,
                         status: row.querySelector('.alloc-status').value
                     });
                 });
+
+                if (hasUnselected) {
+                    alert("Please select a group member for each split allocation.");
+                    return;
+                }
                 payload.paymentAllocations = allocations;
             }
 
