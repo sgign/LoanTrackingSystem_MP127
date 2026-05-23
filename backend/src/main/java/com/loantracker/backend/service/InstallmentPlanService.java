@@ -4,6 +4,7 @@ import com.loantracker.backend.dto.InstallmentPlanDto;
 import com.loantracker.backend.dto.InstallmentTermDto;
 import com.loantracker.backend.entity.InstallmentPlan;
 import com.loantracker.backend.entity.InstallmentTerm;
+import com.loantracker.backend.entity.InstallmentTermStatus;
 import com.loantracker.backend.entity.LoanEntry;
 import com.loantracker.backend.entity.Payment;
 import com.loantracker.backend.repository.InstallmentPlanRepository;
@@ -98,7 +99,7 @@ public class InstallmentPlanService {
     public void skipTerm(UUID termId) {
         InstallmentTerm term = installmentTermRepository.findById(termId)
                 .orElseThrow(() -> new IllegalArgumentException("Installment term not found with ID: " + termId));
-        term.setStatus("SKIPPED");
+        term.setStatus(InstallmentTermStatus.SKIPPED);
         installmentTermRepository.save(term);
 
         // Trigger recalculation of remaining terms
@@ -133,14 +134,14 @@ public class InstallmentPlanService {
             InstallmentTerm term = terms.get(i);
 
             // If term is explicitly skipped, we keep it skipped and do not allocate payment
-            if ("SKIPPED".equals(term.getStatus())) {
+            if (term.getStatus() == InstallmentTermStatus.SKIPPED) {
                 continue;
             }
 
             double required = plan.getAmountPerTerm() != null ? plan.getAmountPerTerm() : 0.0;
 
             if (remainingPaid >= required && required > 0) {
-                term.setStatus("PAID");
+                term.setStatus(InstallmentTermStatus.PAID);
                 remainingPaid -= required;
             } else {
                 // Calculate period start date
@@ -155,11 +156,11 @@ public class InstallmentPlanService {
                 remainingPaid = 0; // consumed
 
                 if (todayMidnight.before(periodStart)) {
-                    term.setStatus("NOT STARTED");
+                    term.setStatus(InstallmentTermStatus.NOT_STARTED);
                 } else if (todayMidnight.after(term.getDueDate())) {
-                    term.setStatus("DELINQUENT");
+                    term.setStatus(InstallmentTermStatus.DELINQUENT);
                 } else {
-                    term.setStatus("UNPAID");
+                    term.setStatus(InstallmentTermStatus.UNPAID);
                 }
             }
         }
@@ -168,8 +169,8 @@ public class InstallmentPlanService {
 
         // Update main plan status if all non-skipped terms are paid
         boolean allPaid = terms.stream()
-                .filter(t -> !"SKIPPED".equals(t.getStatus()))
-                .allMatch(t -> "PAID".equals(t.getStatus()));
+                .filter(t -> t.getStatus() != InstallmentTermStatus.SKIPPED)
+                .allMatch(t -> t.getStatus() == InstallmentTermStatus.PAID);
         if (allPaid && !terms.isEmpty()) {
             plan.setStatus("SETTLED");
         } else {
@@ -206,7 +207,7 @@ public class InstallmentPlanService {
                     .installmentPlan(plan)
                     .termNumber(i)
                     .dueDate(calendar.getTime())
-                    .status("NOT STARTED")
+                    .status(InstallmentTermStatus.NOT_STARTED)
                     .build();
 
             terms.add(installmentTermRepository.save(term));

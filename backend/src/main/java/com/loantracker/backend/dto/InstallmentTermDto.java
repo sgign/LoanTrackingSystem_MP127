@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.loantracker.backend.entity.InstallmentTermStatus;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -17,6 +19,6 @@ public class InstallmentTermDto {
     private UUID installmentId;
     private Integer termNumber;
     private Date dueDate;
-    private String status;
+    private InstallmentTermStatus status;
     private String notes;
 }
