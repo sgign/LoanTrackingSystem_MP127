@@ -1290,5 +1290,63 @@ body::after {
   color: #fff;
 }
 
+/* Premium Modal Overlay with Scrollability */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Centered but scrollable from top */
+    overflow-y: auto;
+    padding: 3rem 1rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Ensure consistent text visibility for disabled form controls */
+.form-select:disabled, .form-input:disabled, .form-textarea:disabled {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    opacity: 0.85 !important;
+    cursor: not-allowed;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important; /* Safari support */
+}
+
+/* Standardize File Selector Button Styling inside form inputs */
+input[type="file"].form-input {
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+input[type="file"].form-input::file-selector-button {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    color: #ffffff;
+    cursor: pointer;
+    margin-right: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+input[type="file"].form-input::file-selector-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
 
 

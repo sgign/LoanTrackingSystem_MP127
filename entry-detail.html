@@ -241,6 +241,96 @@
                 </div>
             </form>
         </div>
+
+        <!-- Payments & Transaction History (Only visible in Edit mode) -->
+        <div id="payments-container" class="form-container hidden" style="margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 class="section-title" style="margin: 0;">Payment Records</h2>
+                <button type="button" id="btn-add-payment" class="btn btn-primary">+ Add Payment</button>
+            </div>
+            <div class="transactions-table-container">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Payee</th>
+                            <th>Proof</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-history-body">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4);">Loading payments...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Payment Modal -->
+        <div id="paymentModal" class="modal-overlay hidden" style="display: none;">
+            <div class="form-container" style="max-width: 500px; width: 90%; background: #121814; border: 1px solid rgba(255,255,255,0.1); padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin-top: auto; margin-bottom: auto;">
+                <h2 style="margin-top: 0; margin-bottom: 1.5rem; color: #fff;">New Payment</h2>
+                <form id="payment-form">
+                    <div class="form-grid" style="grid-template-columns: 1fr; gap: 1.25rem;">
+                        <!-- Payment Date -->
+                        <div class="form-group">
+                            <label for="payDate">Payment Date <span class="required">*</span></label>
+                            <input type="date" id="payDate" class="form-input" required>
+                        </div>
+                        <!-- Payment Amount -->
+                        <div class="form-group">
+                            <label for="payAmount">Payment Amount (₱) <span class="required">*</span></label>
+                            <input type="number" id="payAmount" class="form-input" min="0.01" step="0.01" required placeholder="0.00">
+                        </div>
+                        <!-- Payee selection -->
+                        <div class="form-group">
+                            <label for="payeeSelect">Payee Person <span class="required">*</span></label>
+                            <select id="payeeSelect" class="form-select" required>
+                                <option value="" disabled selected>Select Payee</option>
+                            </select>
+                        </div>
+                        <!-- Payment Method -->
+                        <div class="form-group">
+                            <label for="payMethod">Payment Method</label>
+                            <select id="payMethod" class="form-select">
+                                <option value="Cash" selected>Cash</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <!-- Notes -->
+                        <div class="form-group">
+                            <label for="payNotes">Notes</label>
+                            <textarea id="payNotes" class="form-textarea" placeholder="Add payment details..." style="min-height: 80px;"></textarea>
+                        </div>
+                        <!-- Proof / Receipt upload -->
+                        <div class="form-group image-upload-wrapper">
+                            <label for="payProofFile">Proof of Payment</label>
+                            <input type="file" id="payProofFile" class="form-input" accept="image/*">
+                            <div class="image-preview-container" style="height: 140px; margin-top: 0.5rem; width: 100%; max-width: 100%;">
+                                <img id="pay-image-preview" src="" alt="Proof Preview" class="hidden">
+                                <span id="pay-image-placeholder" class="image-preview-placeholder">No proof uploaded</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" style="margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1.25rem;">
+                        <button type="button" id="btn-close-modal" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Proof Viewer Modal -->
+        <div id="proofModal" class="modal-overlay hidden" style="display: none; align-items: center; background: rgba(0,0,0,0.9);">
+            <div style="position: relative; max-width: 90%; max-height: 90%;">
+                <img id="proof-large-image" src="" alt="Proof large view" style="max-width: 100%; max-height: 90vh; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2);">
+                <button type="button" id="btn-close-proof" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: #fff; font-size: 2.5rem; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -254,6 +344,8 @@
         let allGroups = [];
         let currentGroupMembers = [];
         let allocationRowCounter = 0;
+        let currentLoan = null;
+        let paymentProofBase64 = null;
 
         function formatDateForInput(dateStr) {
             if (!dateStr) return '';
@@ -851,6 +943,12 @@
                     });
                 }
             }
+
+            // Save global loan reference
+            currentLoan = loan;
+
+            // Load payments records list
+            await loadPaymentsList(loan);
         }
 
         // Save Form Handler
@@ -1004,6 +1102,305 @@
                 alert("Error deleting entry: " + err.message);
             }
         }
+
+        // --- Payments & Modals Integration ---
+
+        function formatYYMMDD(date) {
+            const y = String(date.getFullYear()).slice(-2);
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return y + m + d;
+        }
+
+        function getMethodBadge(method) {
+            let color = "#4caf50"; 
+            let bg = "rgba(76, 175, 80, 0.2)";
+            if (method === "GCash") {
+                color = "#5c6bc0"; 
+                bg = "rgba(92, 107, 192, 0.2)";
+            } else if (method === "Bank Transfer") {
+                color = "#7e57c2"; 
+                bg = "rgba(126, 87, 194, 0.2)";
+            }
+            return `<span style="color: ${color}; background: ${bg}; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; border: 1px solid ${color}44;">${method}</span>`;
+        }
+
+        async function loadPaymentsList(loan) {
+            const paymentsContainer = document.getElementById('payments-container');
+            paymentsContainer.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`${API_BASE}/payments`);
+                if (!res.ok) throw new Error("Failed to fetch payments");
+                const payments = await res.json();
+
+                const filtered = Array.isArray(payments)
+                    ? payments.filter(p => p.loanEntry && p.loanEntry.entryId === loan.entryId)
+                    : [];
+
+                const tbody = document.getElementById('payments-history-body');
+                tbody.innerHTML = '';
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4);">No payments recorded yet.</td></tr>`;
+                    return;
+                }
+
+                filtered.forEach(p => {
+                    const tr = document.createElement('tr');
+                    
+                    // Format date
+                    const pDate = p.paymentDate ? new Date(p.paymentDate) : new Date();
+                    const yymmdd = formatYYMMDD(pDate);
+                    const readableDate = pDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+                    const dateDisplay = `${yymmdd} <span style="font-size: 0.8rem; color: rgba(255,255,255,0.5); display: block;">(${readableDate})</span>`;
+
+                    // Format amount
+                    const amountDisplay = `₱${formatCurrency(p.paymentAmount)}`;
+
+                    // Payee name
+                    const payeeName = p.payeePerson ? `${p.payeePerson.firstName} ${p.payeePerson.lastName}`.trim() : 'N/A';
+
+                    // Proof preview
+                    let proofHtml = '<span style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">No proof</span>';
+                    if (p.proof) {
+                        proofHtml = `<img src="data:image/png;base64,${p.proof}" style="max-height: 40px; max-width: 80px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15);" onclick="openProofViewer('${p.proof}')" title="Click to view full image">`;
+                    }
+
+                    // Notes parsing
+                    let method = 'Cash';
+                    let noteContent = '—';
+                    if (p.notes) {
+                        if (p.notes.includes('|')) {
+                            const parts = p.notes.split('|');
+                            method = parts[0] || 'Cash';
+                            noteContent = parts[1] || '—';
+                        } else {
+                            noteContent = p.notes;
+                        }
+                    }
+                    const notesDisplay = `
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div>${getMethodBadge(method)}</div>
+                            <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7); font-style: italic;">${noteContent}</div>
+                        </div>
+                    `;
+
+                    // Delete action button
+                    const deleteBtnCell = `
+                        <button type="button" style="background: #e53935; border: none; padding: 6px 12px; border-radius: 50px; color: #fff; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;" onclick="deletePaymentRecord('${p.paymentId}')">
+                            Delete
+                        </button>
+                    `;
+
+                    tr.innerHTML = `
+                        <td>${dateDisplay}</td>
+                        <td style="font-weight: 700; color: #ffca28;">${amountDisplay}</td>
+                        <td>${payeeName}</td>
+                        <td>${proofHtml}</td>
+                        <td>${notesDisplay}</td>
+                        <td>${deleteBtnCell}</td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error("Error loading payments list:", err);
+                document.getElementById('payments-history-body').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #ff8a80;">Failed to load payments history.</td></tr>`;
+            }
+        }
+
+        function openPaymentModal() {
+            if (!currentLoan) return;
+
+            // Reset form
+            document.getElementById('payment-form').reset();
+            paymentProofBase64 = null;
+            document.getElementById('pay-image-preview').classList.add('hidden');
+            document.getElementById('pay-image-preview').src = '';
+            document.getElementById('pay-image-placeholder').classList.remove('hidden');
+
+            // Default date to today
+            const today = new Date();
+            document.getElementById('payDate').value = today.toISOString().substring(0, 10);
+            
+            // Set min date based on loan borrowed date to prevent earlier payments
+            if (currentLoan.dateBorrowed) {
+                document.getElementById('payDate').min = formatDateForInput(currentLoan.dateBorrowed);
+            }
+
+            // Populate payee options
+            const payeeSelect = document.getElementById('payeeSelect');
+            payeeSelect.innerHTML = '<option value="" disabled selected>Select Payee</option>';
+
+            if (currentLoan.borrowerPersonId) {
+                const opt = document.createElement('option');
+                opt.value = currentLoan.borrowerPersonId;
+                opt.textContent = currentLoan.borrowerPersonName;
+                opt.selected = true;
+                payeeSelect.appendChild(opt);
+                payeeSelect.disabled = true;
+            } else if (currentLoan.borrowerGroupId) {
+                payeeSelect.disabled = false;
+                currentGroupMembers.forEach(m => {
+                    const firstName = m.personFirstName || m.firstName || '';
+                    const lastName = m.personLastName || m.lastName || '';
+                    const name = `${firstName} ${lastName}`.trim();
+                    const opt = document.createElement('option');
+                    opt.value = m.personId;
+                    opt.textContent = name;
+                    payeeSelect.appendChild(opt);
+                });
+            } else {
+                payeeSelect.disabled = false;
+            }
+
+            // Show modal
+            const modal = document.getElementById('paymentModal');
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('paymentModal');
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+        }
+
+        function openProofViewer(base64Proof) {
+            const modal = document.getElementById('proofModal');
+            const img = document.getElementById('proof-large-image');
+            img.src = `data:image/png;base64,${base64Proof}`;
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+        }
+
+        function closeProofViewer() {
+            const modal = document.getElementById('proofModal');
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+        }
+
+        async function deletePaymentRecord(paymentId) {
+            if (!confirm("Are you sure you want to delete this payment record? The amount will be added back to the remaining balance of the loan.")) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/${paymentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(errText || "Error deleting payment record");
+                }
+
+                // Refresh details
+                await loadLoanDetail();
+
+            } catch (err) {
+                console.error("Error deleting payment:", err);
+                alert("Error deleting payment: " + err.message);
+            }
+        }
+
+        // Setup event listener for add payment button
+        document.getElementById('btn-add-payment').addEventListener('click', openPaymentModal);
+        document.getElementById('btn-close-modal').addEventListener('click', closePaymentModal);
+        document.getElementById('btn-close-proof').addEventListener('click', closeProofViewer);
+
+        // File reader for payment proof
+        document.getElementById('payProofFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const fullBase64 = evt.target.result;
+                // Jackson maps raw base64 string to byte[]
+                paymentProofBase64 = fullBase64.split(',')[1];
+                
+                const img = document.getElementById('pay-image-preview');
+                const placeholder = document.getElementById('pay-image-placeholder');
+                img.src = fullBase64;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Submit new payment
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const amount = parseFloat(document.getElementById('payAmount').value);
+            const dateVal = document.getElementById('payDate').value;
+            
+            // Temporarily enable to read value if disabled
+            const payeeSelect = document.getElementById('payeeSelect');
+            const payeeId = payeeSelect.value;
+            
+            const method = document.getElementById('payMethod').value;
+            const noteText = document.getElementById('payNotes').value.trim();
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid payment amount.');
+                return;
+            }
+            if (!payeeId) {
+                alert('Please select a payee.');
+                return;
+            }
+
+            const formattedNotes = `${method}|${noteText}`;
+
+            const payload = {
+                paymentAmount: amount,
+                paymentDate: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+                payeePerson: {
+                    personId: payeeId
+                },
+                proof: paymentProofBase64,
+                notes: formattedNotes,
+                loanEntry: {
+                    entryId: entryId
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(errText || "Error saving payment");
+                }
+
+                closePaymentModal();
+                await loadLoanDetail();
+
+            } catch (err) {
+                console.error("Error saving payment:", err);
+                alert("Error saving payment: " + err.message);
+            }
+        });
+
+        // Modal backdrop close listeners
+        window.addEventListener('click', function(e) {
+            const payModal = document.getElementById('paymentModal');
+            if (e.target === payModal) {
+                closePaymentModal();
+            }
+            const proofModal = document.getElementById('proofModal');
+            if (e.target === proofModal) {
+                closeProofViewer();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
