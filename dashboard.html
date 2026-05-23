@@ -123,7 +123,7 @@
                 const response = await fetch(`${API_BASE}/entries`);
                 if (!response.ok) throw new Error('Failed to fetch loans');
                 const loans = await response.json();
-                const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID').length;
+                const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID' && Math.round(l.amountRemaining || 0) > 0).length;
                 const activeBadge = document.getElementById('active-loans-count');
                 if (activeBadge) {
                     activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;

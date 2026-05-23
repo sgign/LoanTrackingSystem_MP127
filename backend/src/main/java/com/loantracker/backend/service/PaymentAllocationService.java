@@ -81,6 +81,67 @@ public class PaymentAllocationService {
         }
 
         List<PaymentAllocation> saved = paymentAllocationRepository.saveAll(toSave);
+
+        // Synchronize Payment records based on allocation statuses
+        List<Payment> existingPayments = paymentRepository.findByLoanEntry_EntryId(entryId);
+        for (PaymentAllocation alloc : saved) {
+            Person payee = alloc.getPayeePerson();
+            if (payee == null) continue;
+
+            boolean hasPayment = false;
+            Payment matchingPayment = null;
+            for (Payment p : existingPayments) {
+                if (p.getPayeePerson() != null && p.getPayeePerson().getPersonId().equals(payee.getPersonId())) {
+                    hasPayment = true;
+                    matchingPayment = p;
+                    break;
+                }
+            }
+
+            if ("PAID".equals(alloc.getStatus())) {
+                if (!hasPayment) {
+                    Payment newPayment = Payment.builder()
+                            .loanEntry(entry)
+                            .payeePerson(payee)
+                            .paymentAmount(alloc.getAmount())
+                            .paymentDate(new java.util.Date())
+                            .notes("Auto-generated from Group Split Allocation")
+                            .build();
+                    paymentRepository.save(newPayment);
+                }
+            } else if ("UNPAID".equals(alloc.getStatus())) {
+                if (hasPayment && matchingPayment != null) {
+                    paymentRepository.delete(matchingPayment);
+                }
+            }
+        }
+
+        // Recalculate loan entry amountRemaining and status
+        List<Payment> finalPayments = paymentRepository.findByLoanEntry_EntryId(entryId);
+        double totalPaid = finalPayments.stream()
+                .mapToDouble(p -> p.getPaymentAmount() != null ? p.getPaymentAmount() : 0.0)
+                .sum();
+        double amountBorrowed = entry.getAmountBorrowed() != null ? entry.getAmountBorrowed() : 0.0;
+        double newRemaining = Math.max(0.0, amountBorrowed - totalPaid);
+
+        if (Math.round(newRemaining) <= 0) {
+            entry.setAmountRemaining(0.0);
+            entry.setPaymentStatus("PAID");
+            if (entry.getDateFullyPaid() == null) {
+                entry.setDateFullyPaid(new java.util.Date());
+            }
+        } else {
+            entry.setAmountRemaining(newRemaining);
+            if (newRemaining < amountBorrowed) {
+                entry.setPaymentStatus("PARTIALLY PAID");
+                entry.setDateFullyPaid(null);
+            } else {
+                entry.setPaymentStatus("UNPAID");
+                entry.setDateFullyPaid(null);
+            }
+        }
+        loanEntryRepository.save(entry);
+
         return saved.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
