@@ -106,7 +106,7 @@ body::after {
 
 .navbar-pill a.active {
     color: #ffffff;
-    background: linear-gradient(180deg, rgba(82, 148, 90, 0.85) 0%, rgba(63, 117, 72, 0.85) 100%);
+    background: url('Green Gradient.png') center/cover no-repeat;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
