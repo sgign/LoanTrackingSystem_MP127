@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import java.util.List;
 import java.util.Date;
 import java.util.UUID;
 
@@ -78,4 +81,19 @@ public class LoanEntry {
 
     @Column(name = "split_type")
     private String splitType;
+
+    @OneToMany(mappedBy = "loanEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Payment> payments;
+
+    @OneToMany(mappedBy = "loanEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<InstallmentPlan> installmentPlans;
+
+    @OneToMany(mappedBy = "loanEntry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<PaymentAllocation> paymentAllocations;
 }

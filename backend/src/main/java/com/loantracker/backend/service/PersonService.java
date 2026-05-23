@@ -8,6 +8,7 @@ import com.loantracker.backend.repository.GroupMembershipRepository;
 import com.loantracker.backend.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -59,16 +60,11 @@ public class PersonService {
         return mapToResponse(updated);
     }
 
+    @Transactional
     public void deletePerson(UUID id) {
-        if (!personRepository.existsById(id)) {
-            throw new RuntimeException("Person not found");
-        }
-        
-        // Remove all group memberships for this person first to avoid constraint violations
-        List<GroupMembership> memberships = groupMembershipRepository.findByPerson_PersonId(id);
-        groupMembershipRepository.deleteAll(memberships);
-        
-        personRepository.deleteById(id);
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Person not found"));
+        personRepository.delete(person);
     }
 
     private String generateInitials(String firstName, String lastName) {

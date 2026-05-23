@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,4 +39,29 @@ public class Person {
 
     @Column(name = "notes")
     private String notes;
+
+    @OneToMany(mappedBy = "borrowerPerson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<LoanEntry> borrowedLoans;
+
+    @OneToMany(mappedBy = "lenderPerson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<LoanEntry> lentLoans;
+
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<GroupMembership> groupMemberships;
+
+    @OneToMany(mappedBy = "payeePerson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<PaymentAllocation> paymentAllocations;
+
+    @OneToMany(mappedBy = "payeePerson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Payment> payments;
 }

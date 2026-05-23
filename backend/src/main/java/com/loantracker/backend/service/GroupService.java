@@ -9,6 +9,7 @@ import com.loantracker.backend.repository.GroupEntityRepository;
 import com.loantracker.backend.repository.GroupMembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +56,7 @@ public class GroupService {
         return mapToResponse(updated);
     }
 
+    @Transactional
     public void deleteGroup(UUID id) {
         if (!groupEntityRepository.existsById(id)) {
             throw new RuntimeException("Group not found");

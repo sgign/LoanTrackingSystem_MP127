@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import java.util.List;
 import java.util.Date;
 import java.util.UUID;
 
@@ -46,4 +49,9 @@ public class InstallmentPlan {
 
     @Column(name = "notes")
     private String notes;
+
+    @OneToMany(mappedBy = "installmentPlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<InstallmentTerm> installmentTerms;
 }

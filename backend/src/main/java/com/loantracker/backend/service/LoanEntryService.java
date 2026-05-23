@@ -133,14 +133,9 @@ public class LoanEntryService {
 
     @Transactional
     public void deleteLoan(UUID entryId) {
-        if (!loanEntryRepository.existsById(entryId)) {
-            throw new IllegalArgumentException("Loan entry not found with ID: " + entryId);
-        }
-        
-        installmentPlanService.deletePlanByEntryId(entryId);
-        paymentAllocationService.deleteAllocationsByEntryId(entryId);
-        
-        loanEntryRepository.deleteById(entryId);
+        LoanEntry entry = loanEntryRepository.findById(entryId)
+                .orElseThrow(() -> new IllegalArgumentException("Loan entry not found with ID: " + entryId));
+        loanEntryRepository.delete(entry);
     }
 
     private void updateEntryFromDto(LoanEntry entry, LoanEntryDto dto) {
