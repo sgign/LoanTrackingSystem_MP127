@@ -58,11 +58,11 @@ public class GroupMembershipService {
         return GroupMembershipResponse.builder()
                 .membershipId(membership.getMembershipId())
                 .groupId(membership.getGroup().getGroupId())
+                .groupName(membership.getGroup().getGroupName())
                 .personId(membership.getPerson().getPersonId())
-                // In people-groups.html `removeMember` checks for `x.personId === personId` but uses `m.membershipId`
-                // Wait, if frontend fetches /api/groups/{groupId}/members and expects the person details in it:
-                // Frontend: const m = list.find(x => x.personId === personId);
-                // GroupMembershipResponse has personId, groupId, and membershipId. That perfectly satisfies the frontend.
+                .personFirstName(membership.getPerson().getFirstName())
+                .personLastName(membership.getPerson().getLastName())
+                .personInitials(membership.getPerson().getInitials())
                 .build();
     }
 }

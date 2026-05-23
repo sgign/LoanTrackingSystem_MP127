@@ -1,5 +1,6 @@
 package com.loantracker.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class LoanEntry {
 
     @Id
@@ -43,14 +45,17 @@ public class LoanEntry {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "borrower_person_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Person borrowerPerson;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "borrower_group_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private GroupEntity borrowerGroup;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lender_person_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Person lenderPerson;
 
     @Column(name = "amount_borrowed")
@@ -70,4 +75,7 @@ public class LoanEntry {
 
     @Column(name = "receipt_proof", columnDefinition = "BYTEA")
     private byte[] receiptProof;
+
+    @Column(name = "split_type")
+    private String splitType;
 }
