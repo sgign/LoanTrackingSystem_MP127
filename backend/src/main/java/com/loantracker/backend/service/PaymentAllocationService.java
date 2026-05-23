@@ -4,15 +4,19 @@ import com.loantracker.backend.dto.PaymentAllocationDto;
 import com.loantracker.backend.entity.LoanEntry;
 import com.loantracker.backend.entity.PaymentAllocation;
 import com.loantracker.backend.entity.Person;
+import com.loantracker.backend.entity.Payment;
 import com.loantracker.backend.repository.LoanEntryRepository;
 import com.loantracker.backend.repository.PaymentAllocationRepository;
+import com.loantracker.backend.repository.PaymentRepository;
 import com.loantracker.backend.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,6 +27,7 @@ public class PaymentAllocationService {
     private final PaymentAllocationRepository paymentAllocationRepository;
     private final LoanEntryRepository loanEntryRepository;
     private final PersonRepository personRepository;
+    private final PaymentRepository paymentRepository;
 
     @Transactional(readOnly = true)
     public List<PaymentAllocationDto> getAllocationsByEntryId(UUID entryId) {
@@ -215,5 +220,42 @@ public class PaymentAllocationService {
                 .status(alloc.getStatus())
                 .notes(alloc.getNotes())
                 .build();
+    }
+
+    @Transactional
+    public void recalculateAllocationStatuses(UUID entryId) {
+        List<PaymentAllocation> allocations = paymentAllocationRepository.findByLoanEntry_EntryId(entryId);
+        if (allocations.isEmpty()) {
+            return;
+        }
+
+        List<Payment> payments = paymentRepository.findByLoanEntry_EntryId(entryId);
+        
+        // Group payments by payeePersonId
+        Map<UUID, Double> paidAmounts = new HashMap<>();
+        for (Payment p : payments) {
+            if (p.getPayeePerson() != null) {
+                UUID personId = p.getPayeePerson().getPersonId();
+                double amt = p.getPaymentAmount() != null ? p.getPaymentAmount() : 0.0;
+                paidAmounts.put(personId, paidAmounts.getOrDefault(personId, 0.0) + amt);
+            }
+        }
+        
+        for (PaymentAllocation alloc : allocations) {
+            if (alloc.getPayeePerson() == null) continue;
+            UUID personId = alloc.getPayeePerson().getPersonId();
+            double totalPaid = paidAmounts.getOrDefault(personId, 0.0);
+            double requiredAmt = alloc.getAmount() != null ? alloc.getAmount() : 0.0;
+            
+            if (totalPaid >= requiredAmt && requiredAmt > 0) {
+                alloc.setStatus("PAID");
+            } else if (totalPaid > 0) {
+                alloc.setStatus("PARTIALLY PAID");
+            } else {
+                alloc.setStatus("UNPAID");
+            }
+        }
+        
+        paymentAllocationRepository.saveAll(allocations);
     }
 }

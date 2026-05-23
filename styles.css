@@ -131,6 +131,8 @@ body::after {
     color: #ffffff;
     text-align: left;
     letter-spacing: -1px;
+    margin-top: 0;
+    margin-bottom: -1.5rem;
 }
 
 /* Metrics Cards Grid */
