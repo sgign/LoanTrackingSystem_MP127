@@ -135,7 +135,9 @@
                             <th>#</th>
                             <th>DATE</th>
                             <th>AMOUNT</th>
+                            <th>PAYEE</th>
                             <th>METHOD</th>
+                            <th>PROOF</th>
                             <th>NOTE</th>
                         </tr>
                     </thead>
@@ -145,35 +147,57 @@
         </div>
     </main>
 
-    <div id="paymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
-        <div class="form-container" style="max-width: 450px; width: 90%; background: #121814; border: 1px solid rgba(255,255,255,0.1); padding: 2.5rem; border-radius: 20px;">
+    <div id="paymentModal" class="modal-overlay hidden" style="display: none;">
+        <div class="form-container" style="max-width: 500px; width: 90%; background: #121814; border: 1px solid rgba(255,255,255,0.1); padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin-top: auto; margin-bottom: auto;">
             <h2 style="margin-top: 0; margin-bottom: 1.5rem; color: #fff;">New Payment</h2>
-            
-            <div class="form-grid" style="grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 1.5rem;">
-                <div class="form-group">
-                <label for="payAmount">Amount (₱)</label>
-                <input type="number" id="payAmount" class="form-input" placeholder="0.00">
-            </div>
-
-            <div class="form-group">
-                <label for="payMethod">Payment Method</label>
-                <select id="payMethod" class="form-select">
-                    <option value="Cash">Cash</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="payNote">Note</label>
-                <input type="text" id="payNote" class="form-input" placeholder="Optional notes...">
-            </div>
+            <form id="payment-form">
+                <div class="form-grid" style="grid-template-columns: 1fr; gap: 1.25rem;">
+                    <!-- Payment Date -->
+                    <div class="form-group">
+                        <label for="payDate">Payment Date <span class="required">*</span></label>
+                        <input type="date" id="payDate" class="form-input" required>
+                    </div>
+                    <!-- Payment Amount -->
+                    <div class="form-group">
+                        <label for="payAmount">Payment Amount (₱) <span class="required">*</span></label>
+                        <input type="number" id="payAmount" class="form-input" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <!-- Payee selection -->
+                    <div class="form-group">
+                        <label for="payeeSelect">Payee Person <span class="required">*</span></label>
+                        <select id="payeeSelect" class="form-select" required style="padding-right: 1.75rem;">
+                            <option value="" disabled selected>Select Payee</option>
+                        </select>
+                    </div>
+                    <!-- Payment Method -->
+                    <div class="form-group">
+                        <label for="payMethod">Payment Method</label>
+                        <select id="payMethod" class="form-select" style="padding-right: 1.75rem;">
+                            <option value="Cash" selected>Cash</option>
+                            <option value="GCash">GCash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <!-- Notes -->
+                    <div class="form-group">
+                        <label for="payNotes">Notes</label>
+                        <textarea id="payNotes" class="form-textarea" placeholder="Add payment details..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <!-- Proof / Receipt upload -->
+                    <div class="form-group image-upload-wrapper">
+                        <label for="payProofFile">Proof of Payment</label>
+                        <input type="file" id="payProofFile" class="form-input" accept="image/*">
+                        <div class="image-preview-container" style="height: 140px; margin-top: 0.5rem; width: 100%; max-width: 100%;">
+                            <img id="pay-image-preview" src="" alt="Proof Preview" class="hidden">
+                            <span id="pay-image-placeholder" class="image-preview-placeholder">No proof uploaded</span>
+                        </div>
+                    </div>
                 </div>
-
-            <div class="form-actions" style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                <button id="savePaymentBtn" class="btn btn-primary" onclick="submitNewPayment()">💾 Save Payment</button>
-            </div>
+                <div class="form-actions" style="margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1.25rem; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Payment</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -181,6 +205,20 @@
     const API_BASE = 'http://127.0.0.1:8080/api';
     const urlParams = new URLSearchParams(window.location.search);
     const entryId = urlParams.get('id');
+
+    let currentLoan = null;
+    let currentGroupMembers = [];
+    let paymentProofBase64 = null;
+
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const month = '' + (d.getMonth() + 1);
+        const day = '' + d.getDate();
+        const year = d.getFullYear();
+        return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+    }
 
     function formatCurrency(amt) {
         return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amt || 0);
@@ -239,8 +277,62 @@
         }
     }
 
-    function openModal() { document.getElementById('paymentModal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
+    function openModal() {
+        if (!currentLoan) return;
+
+        // Reset form
+        document.getElementById('payment-form').reset();
+        paymentProofBase64 = null;
+        document.getElementById('pay-image-preview').classList.add('hidden');
+        document.getElementById('pay-image-preview').src = '';
+        document.getElementById('pay-image-placeholder').classList.remove('hidden');
+
+        // Default date to today
+        const today = new Date();
+        document.getElementById('payDate').value = today.toISOString().substring(0, 10);
+        
+        // Set min date based on loan borrowed date to prevent earlier payments
+        if (currentLoan.dateBorrowed) {
+            document.getElementById('payDate').min = formatDateForInput(currentLoan.dateBorrowed);
+        }
+
+        // Populate payee options
+        const payeeSelect = document.getElementById('payeeSelect');
+        payeeSelect.innerHTML = '<option value="" disabled selected>Select Payee</option>';
+
+        if (currentLoan.borrowerPersonId) {
+            const opt = document.createElement('option');
+            opt.value = currentLoan.borrowerPersonId;
+            opt.textContent = currentLoan.borrowerPersonName;
+            opt.selected = true;
+            payeeSelect.appendChild(opt);
+            payeeSelect.disabled = true;
+        } else if (currentLoan.borrowerGroupId) {
+            payeeSelect.disabled = false;
+            currentGroupMembers.forEach(m => {
+                const firstName = m.personFirstName || m.firstName || '';
+                const lastName = m.personLastName || m.lastName || '';
+                const name = `${firstName} ${lastName}`.trim();
+                const opt = document.createElement('option');
+                opt.value = m.personId;
+                opt.textContent = name;
+                payeeSelect.appendChild(opt);
+            });
+        } else {
+            payeeSelect.disabled = false;
+        }
+
+        // Show modal
+        const modal = document.getElementById('paymentModal');
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('paymentModal');
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
 
     function getMethodBadge(method) {
         let color = "#4caf50"; 
@@ -263,7 +355,7 @@
             const res = await fetch(`${API_BASE}/entries`);
             if (!res.ok) return;
             const loans = await res.json();
-            const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID').length;
+            const activeLoansCount = loans.filter(l => l.paymentStatus !== 'PAID' && Math.round(l.amountRemaining || 0) > 0).length;
             const activeBadge = document.getElementById('active-loans-count');
             if (activeBadge) {
                 activeBadge.innerHTML = `<strong>${activeLoansCount}</strong> Active Loan${activeLoansCount !== 1 ? 's' : ''}`;
@@ -282,6 +374,19 @@ async function loadDashboard() {
     try {
         const loanRes = await fetch(`${API_BASE}/entries/${entryId}`);
         loan = await loanRes.json();
+        currentLoan = loan;
+
+        // Fetch group members if it is a group loan
+        if (loan.borrowerGroupId) {
+            try {
+                const mRes = await fetch(`${API_BASE}/groups/${loan.borrowerGroupId}/members`);
+                if (mRes.ok) {
+                    currentGroupMembers = await mRes.json();
+                }
+            } catch (e) {
+                console.error("Error loading group members:", e);
+            }
+        }
 
         // Use a fallback for the borrower name
         document.getElementById('disp-borrower').innerText = loan.borrowerPersonName || loan.borrowerGroupName || loan.entryName || "Loan Detail";
@@ -341,6 +446,8 @@ async function loadDashboard() {
         let historyItems = filtered.map(p => ({
             date: new Date(p.paymentDate),
             amount: p.paymentAmount,
+            payeeName: p.payeePerson ? `${p.payeePerson.firstName} ${p.payeePerson.lastName}`.trim() : 'N/A',
+            proof: p.proof || null,
             method: p.notes?.split('|')[0] || 'Cash',
             note: p.notes?.split('|')[1] || '—',
             isSkipped: false
@@ -353,6 +460,8 @@ async function loadDashboard() {
                     historyItems.push({
                         date: new Date(t.dueDate),
                         amount: loan.installmentPlan.amountPerTerm || 0,
+                        payeeName: '—',
+                        proof: null,
                         method: 'SKIPPED',
                         note: `Term ${t.termNumber} Skipped`,
                         isSkipped: true
@@ -366,60 +475,151 @@ async function loadDashboard() {
 
         const tbody = document.getElementById('pay-history-body');
         if (historyItems.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:gray;">No payments or skipped terms recorded yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:gray;">No payments or skipped terms recorded yet.</td></tr>';
         } else {
-            tbody.innerHTML = historyItems.map((item, index) => `
+            tbody.innerHTML = historyItems.map((item, index) => {
+                let proofHtml = '<span style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">—</span>';
+                if (item.proof) {
+                    proofHtml = `<img src="data:image/png;base64,${item.proof}" style="max-height: 40px; max-width: 80px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15);" onclick="openProofViewer('${item.proof}')" title="Click to view full image">`;
+                }
+                return `
                 <tr style="border-bottom: 2px solid rgba(255,255,255,0.08); background: ${index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};">
                     <td style="color: rgba(255,255,255,0.4); padding: 1.3rem 0.75rem; font-size: 0.85rem;">#${index + 1}</td>
                     <td style="padding: 1.3rem 0.75rem;">${item.date.toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'})}</td>
                     <td style="font-weight: 700; color: ${item.isSkipped ? 'rgba(255,255,255,0.35)' : '#ffca28'}; font-size: 1.05rem; padding: 1.3rem 0.75rem; ${item.isSkipped ? 'text-decoration: line-through;' : ''}">${formatCurrency(item.amount)}</td>
+                    <td style="padding: 1.3rem 0.75rem;">${item.payeeName}</td>
                     <td style="padding: 1.3rem 0.75rem;">${getMethodBadge(item.method)}</td>
+                    <td style="padding: 1.3rem 0.75rem;">${proofHtml}</td>
                     <td style="color: rgba(255,255,255,0.5); font-style: italic; padding: 1.3rem 0.75rem;">${item.note}</td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
     } catch (err) {
         console.error("Payment history failed:", err);
     }
 }
-    async function submitNewPayment() {
-        const amount = document.getElementById('payAmount').value;
-        const method = document.getElementById('payMethod').value;
-        const note = document.getElementById('payNote').value;
 
-        if (!amount || parseFloat(amount) <= 0) {
-            alert('Please enter a valid payment amount.');
-            return;
-        }
+// File reader for payment proof and Form submit listener
+document.addEventListener('DOMContentLoaded', () => {
+    const payProofFile = document.getElementById('payProofFile');
+    if (payProofFile) {
+        payProofFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        const payload = {
-            paymentAmount: parseFloat(amount),
-            paymentDate: new Date().toISOString(),
-            notes: `${method}|${note}`,
-            loanEntry: { entryId: entryId }
-        };
-
-        try {
-            const res = await fetch(`${API_BASE}/payments/add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                closeModal();
-                location.reload();
-            } else {
-                const errText = await res.text();
-                alert('Failed to save payment: ' + errText);
-            }
-        } catch (err) {
-            alert('Network error: ' + err.message);
-        }
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const fullBase64 = evt.target.result;
+                paymentProofBase64 = fullBase64.split(',')[1];
+                
+                const img = document.getElementById('pay-image-preview');
+                const placeholder = document.getElementById('pay-image-placeholder');
+                img.src = fullBase64;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
-    document.addEventListener('DOMContentLoaded', loadDashboard);
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const amount = parseFloat(document.getElementById('payAmount').value);
+            const dateVal = document.getElementById('payDate').value;
+            const payeeSelect = document.getElementById('payeeSelect');
+            const payeeId = payeeSelect.value;
+            const method = document.getElementById('payMethod').value;
+            const noteText = document.getElementById('payNotes').value.trim();
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid payment amount.');
+                return;
+            }
+            if (!payeeId) {
+                alert('Please select a payee.');
+                return;
+            }
+
+            const formattedNotes = `${method}|${noteText}`;
+
+            const payload = {
+                paymentAmount: amount,
+                paymentDate: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+                payeePerson: {
+                    personId: payeeId
+                },
+                proof: paymentProofBase64,
+                notes: formattedNotes,
+                loanEntry: {
+                    entryId: entryId
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/payments/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(errText || "Error saving payment");
+                }
+
+                closeModal();
+                await loadDashboard();
+
+            } catch (err) {
+                console.error("Error saving payment:", err);
+                alert("Error saving payment: " + err.message);
+            }
+        });
+    }
+
+    // Modal backdrop close listeners
+    window.addEventListener('click', function(e) {
+        const payModal = document.getElementById('paymentModal');
+        if (e.target === payModal) {
+            closeModal();
+        }
+        const proofModal = document.getElementById('proofModal');
+        if (e.target === proofModal) {
+            closeProofViewer();
+        }
+    });
+});
+
+function openProofViewer(base64Proof) {
+    const modal = document.getElementById('proofModal');
+    const img = document.getElementById('proof-large-image');
+    img.src = `data:image/png;base64,${base64Proof}`;
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+}
+
+function closeProofViewer() {
+    const modal = document.getElementById('proofModal');
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
 </script>
+
+<!-- Proof Viewer Modal -->
+<div id="proofModal" class="modal-overlay hidden" style="display: none; align-items: center; background: rgba(0,0,0,0.9); z-index: 99999;">
+    <div style="position: relative; max-width: 90%; max-height: 90%;">
+        <img id="proof-large-image" src="" alt="Proof large view" style="max-width: 100%; max-height: 90vh; border-radius: 12px; border: 2px solid rgba(255,255,255,0.2);">
+        <button type="button" id="btn-close-proof" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: #fff; font-size: 2.5rem; cursor: pointer; line-height: 1;" onclick="closeProofViewer()">&times;</button>
+    </div>
+</div>
 
 <!-- ── DELETE CONFIRM MODAL ── -->
 <div class="pg-modal-overlay" id="pr-delete-modal" onclick="if(event.target===this)closePrDeleteModal()">

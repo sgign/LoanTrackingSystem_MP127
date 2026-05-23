@@ -156,12 +156,14 @@ public class LoanEntryService {
 
         // Auto-complete logic (mark entry as fully paid, partially paid, or unpaid based on amountRemaining)
         if (entry.getAmountRemaining() != null) {
-            if (entry.getAmountRemaining() <= 0) {
+            double remaining = entry.getAmountRemaining();
+            if (Math.round(remaining) <= 0) {
+                entry.setAmountRemaining(0.0);
                 entry.setPaymentStatus("PAID");
                 if (entry.getDateFullyPaid() == null) {
                     entry.setDateFullyPaid(new java.util.Date());
                 }
-            } else if (entry.getAmountRemaining() < entry.getAmountBorrowed()) {
+            } else if (remaining < entry.getAmountBorrowed()) {
                 entry.setPaymentStatus("PARTIALLY PAID");
                 entry.setDateFullyPaid(null);
             } else {
